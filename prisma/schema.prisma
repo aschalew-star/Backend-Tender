@@ -1,0 +1,205 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  SUPERUSER
+  ADMIN
+  CUSTOMER
+  DATAENTRY
+}
+
+enum PRICETYPE {
+  FREE
+  PAID
+}
+
+enum PRIMUIMETYPE {
+  TENDER
+  THREEMONTHLY
+  SIXMONTHLY
+  YEARLY
+}
+
+model SystemUser {
+  id               Int            @id @default(autoincrement())
+  firstName        String
+  lastName         String
+  email            String         @unique
+  phoneNo          String?
+  role             UserRole       @default(DATAENTRY)
+  password         String
+  type             String         @default("systemuser")
+  createdAt        DateTime       @default(now())
+  tendersPosted    Tender[]       @relation("PostedBy")
+  tendersApproved  Tender[]       @relation("ApprovedBy")
+  paymentsApproved Payment[]      @relation("PaymentApprovedBy")
+  activityLogs     ActivityLog[]  @relation("ActivityLogUser")
+  notifications    Notification[] @relation("NotificationUser")
+  reminders        Reminder[]     @relation("ReminderUser")
+}
+
+model Customer {
+  id            Int            @id @default(autoincrement())
+  firstName     String
+  lastName      String
+  email         String         @unique
+  phone         String?
+  role          UserRole       @default(CUSTOMER)
+  password      String
+  isSubscribed  Boolean        @default(false)
+  endDate       DateTime?
+  type          String         @default("customer")
+  createdAt     DateTime       @default(now())
+  payments      Payment[]      @relation("PaymentCustomer")
+  tenderDocs    TenderDoc[]    @relation("TenderDocCustomer")
+  biddingDocs   BiddingDoc[]   @relation("BiddingDocCustomer")
+  activityLogs  ActivityLog[]  @relation("ActivityLogCustomer")
+  notifications Notification[] @relation("NotificationCustomer")
+  reminders     Reminder[]     @relation("ReminderCustomer")
+}
+
+model Tender {
+  id            Int          @id @default(autoincrement())
+  title         String
+  description   String?
+  biddingOpen   DateTime
+  biddingClosed DateTime
+  categoryId    Int
+  category      Category     @relation(fields: [categoryId], references: [id])
+  subcategoryId Int
+  subcategory   Subcategory  @relation(fields: [subcategoryId], references: [id])
+  postedById  Int?        // make nullable by adding `?`
+  postedBy    SystemUser? @relation("PostedBy", fields: [postedById], references: [id])
+  approvedById  Int?
+  approvedBy    SystemUser?  @relation("ApprovedBy", fields: [approvedById], references: [id])
+  approvedAt    DateTime?
+  type          PRICETYPE    @default(FREE)
+  tenderDocs    TenderDoc[]
+  biddingDocs   BiddingDoc[]
+  reminders     Reminder[]   @relation("ReminderTender")
+}
+
+model TenderDoc {
+  id        Int        @id @default(autoincrement())
+  name      String
+  title     String
+  file      String
+  createdAt DateTime   @default(now())
+  tenderId  Int
+  tender    Tender     @relation(fields: [tenderId], references: [id])
+  price     Float?
+  type      PRICETYPE  @default(FREE)
+  customers Customer[] @relation("TenderDocCustomer")
+}
+
+model BiddingDoc {
+  id          Int        @id @default(autoincrement())
+  title       String
+  description String?
+  company     String
+  file        String
+  price       Float?
+  tenderId    Int
+  tender      Tender     @relation(fields: [tenderId], references: [id])
+  type        PRICETYPE  @default(FREE)
+  customers   Customer[] @relation("BiddingDocCustomer")
+}
+
+model Payment {
+  id           Int         @id @default(autoincrement())
+  customerId   Int
+  customer     Customer    @relation("PaymentCustomer", fields: [customerId], references: [id])
+  bankId       Int
+  bank         Bank        @relation(fields: [bankId], references: [id])
+  approvedById Int?
+  approvedBy   SystemUser? @relation("PaymentApprovedBy", fields: [approvedById], references: [id])
+  price        Float
+  approvedAt   DateTime?
+  howLong      PRIMUIMETYPE?
+}
+
+model Bank {
+  id        Int       @id @default(autoincrement())
+  name      String
+  account   String
+  logo      String?
+  createdAt DateTime  @default(now())
+  payments  Payment[]
+}
+
+model Category {
+  id            Int           @id @default(autoincrement())
+  name          String
+  createdAt     DateTime      @default(now())
+  tenders       Tender[]
+  createdBy  Int?
+
+  subcategories Subcategory[] @relation("CategoryToSubcategory")
+  reminders     Reminder[]    @relation("ReminderCategory")
+}
+
+model Subcategory {
+  id         Int        @id @default(autoincrement())
+  name       String
+  createdBy  Int?
+  createdAt  DateTime   @default(now())
+  categoryId Int
+  category   Category?   @relation("CategoryToSubcategory", fields: [categoryId], references: [id])
+  tenders    Tender[]
+  reminders  Reminder[] @relation("ReminderSubcategory")
+}
+
+model Notification {
+  id         Int        @id @default(autoincrement())
+  userId     Int
+  user       SystemUser @relation("NotificationUser", fields: [userId], references: [id])
+  customerId Int?
+  customer   Customer?  @relation("NotificationCustomer", fields: [customerId], references: [id])
+  message    String
+  isRead     Boolean    @default(false)
+  type       String
+}
+
+model Region {
+  id        Int        @id @default(autoincrement())
+  name      String
+  createdAt DateTime   @default(now())
+  reminders Reminder[]
+}
+
+model ActivityLog {
+  id         Int        @id @default(autoincrement())
+  method     String
+  role       String
+  action     String
+  userId     Int
+  user       SystemUser @relation("ActivityLogUser", fields: [userId], references: [id])
+  customerId Int?
+  customer   Customer?  @relation("ActivityLogCustomer", fields: [customerId], references: [id])
+  detail     String?
+  createdAt  DateTime   @default(now())
+}
+
+model Reminder {
+  id            Int          @id @default(autoincrement())
+  dueDate       DateTime
+  categoryId    Int?
+  category      Category?    @relation("ReminderCategory", fields: [categoryId], references: [id])
+  subcategoryId Int?
+  subcategory   Subcategory? @relation("ReminderSubcategory", fields: [subcategoryId], references: [id])
+  regionId      Int?
+  region        Region?      @relation(fields: [regionId], references: [id])
+  type          String
+  userId        Int
+  user          SystemUser   @relation("ReminderUser", fields: [userId], references: [id])
+  customerId    Int?
+  customer      Customer?    @relation("ReminderCustomer", fields: [customerId], references: [id])
+  tenderId      Int?
+  tender        Tender?      @relation("ReminderTender", fields: [tenderId], references: [id])
+}
