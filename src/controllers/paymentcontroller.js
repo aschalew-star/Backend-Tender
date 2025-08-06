@@ -41,17 +41,17 @@ const createPayment = asynerror(async (req, res, next) => {
         },
       });
 
-      await tx.activityLog.create({
-        data: {
-          method: 'POST',
-          role: req.user.role,
-          action: 'CREATE_PAYMENT',
-          userId: req.user.id,
-          customerId: parseInt(customerId),
-          detail: `Created payment ID: ${newPayment.id} for customer ID: ${customerId}`,
-          createdAt: new Date(),
-        },
-      });
+      // await tx.activityLog.create({
+      //   data: {
+      //     method: 'POST',
+      //     role: req.user.role,
+      //     action: 'CREATE_PAYMENT',
+      //     userId: req.user.id,
+      //     customerId: parseInt(customerId),
+      //     detail: `Created payment ID: ${newPayment.id} for customer ID: ${customerId}`,
+      //     createdAt: new Date(),
+      //   },
+      // });
 
       return newPayment;
     });

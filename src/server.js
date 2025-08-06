@@ -34,7 +34,7 @@ app.use('/api/tender', tender);
 app.use('/api/subcatagory', subcatagory);
 app.use('/api/region', region);
 app.use('/api/Bank', Bank);
-// app.use('/api/payment', Bank);
+app.use('/api/payment', payment);
 
 // Global error handler
 app.use((err, req, res, next) => {

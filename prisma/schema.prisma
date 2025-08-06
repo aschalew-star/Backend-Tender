@@ -26,99 +26,127 @@ enum PRIMUIMETYPE {
   YEARLY
 }
 
+enum NotificationPreference {
+  MORNING
+  AFTERNOON
+  EVENING
+  DAILY
+}
+
 model SystemUser {
-  id               Int            @id @default(autoincrement())
-  firstName        String
-  lastName         String
-  email            String         @unique
-  phoneNo          String?
-  role             UserRole       @default(DATAENTRY)
-  password         String
-  type             String         @default("systemuser")
-  createdAt        DateTime       @default(now())
-  tendersPosted    Tender[]       @relation("PostedBy")
-  tendersApproved  Tender[]       @relation("ApprovedBy")
-  paymentsApproved Payment[]      @relation("PaymentApprovedBy")
-  activityLogs     ActivityLog[]  @relation("ActivityLogUser")
-  notifications    Notification[] @relation("NotificationUser")
-  reminders        Reminder[]     @relation("ReminderUser")
+  id                   Int                     @id @default(autoincrement())
+  firstName           String
+  lastName            String
+  email               String                  @unique
+  phoneNo             String?
+  role                UserRole                @default(DATAENTRY)
+  password            String
+  type                String                  @default("systemuser")
+  createdAt           DateTime                @default(now())
+  notificationPreference NotificationPreference? @default(DAILY)
+
+  tendersPosted       Tender[]                @relation("PostedBy")
+  tendersApproved     Tender[]                @relation("ApprovedBy")
+  paymentsApproved    Payment[]               @relation("PaymentApprovedBy")
+  activityLogs        ActivityLog[]           @relation("ActivityLogUser")
+  notifications       Notification[]          @relation("NotificationUser")
+  reminders           Reminder[]              @relation("ReminderUser")
+  pendingNotifications PendingNotification[]  @relation("PendingNotificationUser")
+  notificationLogs    NotificationLog[]       @relation("NotificationLogUser")
 }
 
 model Customer {
-  id            Int            @id @default(autoincrement())
-  firstName     String
-  lastName      String
-  email         String         @unique
-  phone         String?
-  role          UserRole       @default(CUSTOMER)
-  password      String
-  isSubscribed  Boolean        @default(false)
-  endDate       DateTime?
-  type          String         @default("customer")
-  createdAt     DateTime       @default(now())
-  payments      Payment[]      @relation("PaymentCustomer")
-  tenderDocs    TenderDoc[]    @relation("TenderDocCustomer")
-  biddingDocs   BiddingDoc[]   @relation("BiddingDocCustomer")
-  activityLogs  ActivityLog[]  @relation("ActivityLogCustomer")
-  notifications Notification[] @relation("NotificationCustomer")
-  reminders     Reminder[]     @relation("ReminderCustomer")
+  id                   Int                    @id @default(autoincrement())
+  firstName            String
+  lastName             String
+  email                String                 @unique
+  phone                String?
+  role                 UserRole               @default(CUSTOMER)
+  password             String
+  isSubscribed         Boolean                @default(false)
+  endDate              DateTime?
+  type                 String                 @default("customer")
+  createdAt            DateTime               @default(now())
+  notificationPreference NotificationPreference? @default(DAILY)
+
+  payments             Payment[]              @relation("PaymentCustomer")
+  tenderDocs           TenderDoc[]            @relation("TenderDocCustomer")
+  biddingDocs          BiddingDoc[]           @relation("BiddingDocCustomer")
+  activityLogs         ActivityLog[]          @relation("ActivityLogCustomer")
+  notifications        Notification[]         @relation("NotificationCustomer")
+  reminders            Reminder[]             @relation("ReminderCustomer")
+  pendingNotifications PendingNotification[]  @relation("PendingNotificationCustomer")
+  notificationLogs     NotificationLog[]      @relation("NotificationLogCustomer")
 }
 
 model Tender {
-  id            Int          @id @default(autoincrement())
-  title         String
-  description   String?
-  biddingOpen   DateTime
-  biddingClosed DateTime
-  categoryId    Int
-  category      Category     @relation(fields: [categoryId], references: [id])
-  subcategoryId Int
-  subcategory   Subcategory  @relation(fields: [subcategoryId], references: [id])
-  postedById  Int?        // make nullable by adding `?`
-  postedBy    SystemUser? @relation("PostedBy", fields: [postedById], references: [id])
-  approvedById  Int?
-  approvedBy    SystemUser?  @relation("ApprovedBy", fields: [approvedById], references: [id])
-  approvedAt    DateTime?
-  type          PRICETYPE    @default(FREE)
-  tenderDocs    TenderDoc[]
-  biddingDocs   BiddingDoc[]
-  reminders     Reminder[]   @relation("ReminderTender")
+  id                   Int         @id @default(autoincrement())
+  title                String
+  description          String?
+  biddingOpen          DateTime
+  biddingClosed        DateTime
+
+  categoryId           Int
+  category             Category    @relation(fields: [categoryId], references: [id])
+
+  subcategoryId        Int
+  subcategory          Subcategory @relation(fields: [subcategoryId], references: [id])
+
+  regionId             Int?
+  region               Region?     @relation(fields: [regionId], references: [id])
+
+  postedById           Int?
+  postedBy             SystemUser? @relation("PostedBy", fields: [postedById], references: [id])
+
+  approvedById         Int?
+  approvedBy           SystemUser? @relation("ApprovedBy", fields: [approvedById], references: [id])
+
+  approvedAt           DateTime?
+  type                 PRICETYPE   @default(FREE)
+
+  tenderDocs           TenderDoc[]
+  biddingDocs          BiddingDoc[]
+  reminders            Reminder[]  @relation("ReminderTender")
+  pendingNotifications PendingNotification[]
 }
 
 model TenderDoc {
-  id        Int        @id @default(autoincrement())
-  name      String
-  title     String
-  file      String
-  createdAt DateTime   @default(now())
-  tenderId  Int
-  tender    Tender     @relation(fields: [tenderId], references: [id])
-  price     Float?
-  type      PRICETYPE  @default(FREE)
-  customers Customer[] @relation("TenderDocCustomer")
+  id         Int        @id @default(autoincrement())
+  name       String
+  title      String
+  file       String
+  createdAt  DateTime   @default(now())
+  tenderId   Int
+  tender     Tender     @relation(fields: [tenderId], references: [id])
+  price      Float?
+  type       PRICETYPE  @default(FREE)
+  customers  Customer[] @relation("TenderDocCustomer")
 }
 
 model BiddingDoc {
-  id          Int        @id @default(autoincrement())
-  title       String
+  id         Int        @id @default(autoincrement())
+  title      String
   description String?
-  company     String
-  file        String
-  price       Float?
-  tenderId    Int
-  tender      Tender     @relation(fields: [tenderId], references: [id])
-  type        PRICETYPE  @default(FREE)
-  customers   Customer[] @relation("BiddingDocCustomer")
+  company    String
+  file       String
+  price      Float?
+  tenderId   Int
+  tender     Tender     @relation(fields: [tenderId], references: [id])
+  type       PRICETYPE  @default(FREE)
+  customers  Customer[] @relation("BiddingDocCustomer")
 }
 
 model Payment {
   id           Int         @id @default(autoincrement())
   customerId   Int
   customer     Customer    @relation("PaymentCustomer", fields: [customerId], references: [id])
+
   bankId       Int
   bank         Bank        @relation(fields: [bankId], references: [id])
+
   approvedById Int?
   approvedBy   SystemUser? @relation("PaymentApprovedBy", fields: [approvedById], references: [id])
+
   price        Float
   approvedAt   DateTime?
   howLong      PRIMUIMETYPE?
@@ -134,47 +162,47 @@ model Bank {
 }
 
 model Category {
-  id            Int           @id @default(autoincrement())
-  name          String
-  createdAt     DateTime      @default(now())
-  tenders       Tender[]
-  createdBy  Int?
-
-  subcategories Subcategory[] @relation("CategoryToSubcategory")
-  reminders     Reminder[]    @relation("ReminderCategory")
+  id             Int                 @id @default(autoincrement())
+  name           String
+  createdAt      DateTime            @default(now())
+  createdBy      Int?
+  tenders        Tender[]
+  subcategories  Subcategory[]       @relation("CategoryToSubcategory")
+  reminders      ReminderCategory[]  @relation("ReminderCategory")
 }
 
 model Subcategory {
-  id         Int        @id @default(autoincrement())
-  name       String
-  createdBy  Int?
-  createdAt  DateTime   @default(now())
-  categoryId Int
-  category   Category?   @relation("CategoryToSubcategory", fields: [categoryId], references: [id])
-  tenders    Tender[]
-  reminders  Reminder[] @relation("ReminderSubcategory")
-}
-
-model Notification {
-  id         Int        @id @default(autoincrement())
-  userId     Int
-  user       SystemUser @relation("NotificationUser", fields: [userId], references: [id])
-  customerId Int?
-  customer   Customer?  @relation("NotificationCustomer", fields: [customerId], references: [id])
-  message    String
-  isRead     Boolean    @default(false)
-  type       String
+  id             Int                    @id @default(autoincrement())
+  name           String
+  createdBy      Int?
+  createdAt      DateTime               @default(now())
+  categoryId     Int
+  category       Category?              @relation("CategoryToSubcategory", fields: [categoryId], references: [id])
+  tenders        Tender[]
+  reminders      ReminderSubcategory[]  @relation("ReminderSubcategory")
 }
 
 model Region {
-  id        Int        @id @default(autoincrement())
-  name      String
-  createdAt DateTime   @default(now())
-  reminders Reminder[]
+  id         Int                  @id @default(autoincrement())
+  name       String
+  createdAt  DateTime             @default(now())
+  tenders    Tender[]
+  reminders  ReminderRegion[]     @relation("ReminderRegion")
+}
+
+model Notification {
+  id         Int         @id @default(autoincrement())
+  userId     Int?
+  user       SystemUser? @relation("NotificationUser", fields: [userId], references: [id])
+  customerId Int?
+  customer   Customer?   @relation("NotificationCustomer", fields: [customerId], references: [id])
+  message    String
+  isRead     Boolean     @default(false)
+  type       String
 }
 
 model ActivityLog {
-  id         Int        @id @default(autoincrement())
+  id         Int         @id @default(autoincrement())
   method     String
   role       String
   action     String
@@ -183,23 +211,76 @@ model ActivityLog {
   customerId Int?
   customer   Customer?  @relation("ActivityLogCustomer", fields: [customerId], references: [id])
   detail     String?
-  createdAt  DateTime   @default(now())
+  createdAt  DateTime    @default(now())
 }
 
 model Reminder {
-  id            Int          @id @default(autoincrement())
-  dueDate       DateTime
-  categoryId    Int?
-  category      Category?    @relation("ReminderCategory", fields: [categoryId], references: [id])
-  subcategoryId Int?
-  subcategory   Subcategory? @relation("ReminderSubcategory", fields: [subcategoryId], references: [id])
-  regionId      Int?
-  region        Region?      @relation(fields: [regionId], references: [id])
-  type          String
-  userId        Int
-  user          SystemUser   @relation("ReminderUser", fields: [userId], references: [id])
-  customerId    Int?
-  customer      Customer?    @relation("ReminderCustomer", fields: [customerId], references: [id])
-  tenderId      Int?
-  tender        Tender?      @relation("ReminderTender", fields: [tenderId], references: [id])
+  id           Int                   @id @default(autoincrement())
+  dueDate      DateTime
+  type         NotificationPreference
+  userId       Int
+  user         SystemUser           @relation("ReminderUser", fields: [userId], references: [id])
+  customerId   Int?
+  customer     Customer?            @relation("ReminderCustomer", fields: [customerId], references: [id])
+  tenderId     Int?
+  tender       Tender?              @relation("ReminderTender", fields: [tenderId], references: [id])
+  categories   ReminderCategory[]   @relation("ReminderCategory")
+  subcategories ReminderSubcategory[] @relation("ReminderSubcategory")
+  regions      ReminderRegion[]     @relation("ReminderRegion")
+}
+
+model ReminderCategory {
+  reminderId Int
+  categoryId Int
+  reminder   Reminder @relation("ReminderCategory", fields: [reminderId], references: [id])
+  category   Category @relation("ReminderCategory", fields: [categoryId], references: [id])
+
+  @@id([reminderId, categoryId])
+}
+
+model ReminderSubcategory {
+  reminderId    Int
+  subcategoryId Int
+  reminder      Reminder    @relation("ReminderSubcategory", fields: [reminderId], references: [id])
+  subcategory   Subcategory @relation("ReminderSubcategory", fields: [subcategoryId], references: [id])
+
+  @@id([reminderId, subcategoryId])
+}
+
+model ReminderRegion {
+  reminderId Int
+  regionId   Int
+  reminder   Reminder @relation("ReminderRegion", fields: [reminderId], references: [id])
+  region     Region   @relation("ReminderRegion", fields: [regionId], references: [id])
+
+  @@id([reminderId, regionId])
+}
+
+model PendingNotification {
+  id           Int          @id @default(autoincrement())
+  userId       Int?
+  user         SystemUser?  @relation("PendingNotificationUser", fields: [userId], references: [id])
+  customerId   Int?
+  customer     Customer?    @relation("PendingNotificationCustomer", fields: [customerId], references: [id])
+  tenderId     Int
+  tender       Tender       @relation(fields: [tenderId], references: [id])
+  message      String
+  type         String
+  notifyAt     DateTime
+  notificationLogs NotificationLog[] @relation("NotificationLogPending")
+}
+
+model NotificationLog {
+  id                  Int                 @id @default(autoincrement())
+  userId              Int?
+  user                SystemUser?         @relation("NotificationLogUser", fields: [userId], references: [id])
+  customerId          Int?
+  customer            Customer?           @relation("NotificationLogCustomer", fields: [customerId], references: [id])
+  pendingNotificationId Int?
+  pendingNotification PendingNotification? @relation("NotificationLogPending", fields: [pendingNotificationId], references: [id])
+  tenderId            Int
+  channel             String // 'email' or 'websocket'
+  status              String // 'success', 'failed', 'retry'
+  errorMessage        String?
+  createdAt           DateTime            @default(now())
 }
