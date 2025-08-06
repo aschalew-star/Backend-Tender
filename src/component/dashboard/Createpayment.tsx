@@ -412,7 +412,7 @@ export function PaymentForm() {
 
       setTimeout(() => {
         setMessage({ visible: false, type: "success", message: "" });
-        navigate("/payments");
+        navigate("/admin/Payment");
       }, 2000);
 
       setFormData({

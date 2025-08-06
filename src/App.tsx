@@ -15,6 +15,7 @@ import Signup from "./pages/Signup.tsx"; // Assuming you have a Signup page
 import Tenderedit from "./pages/admin/Tenderedit.tsx"; // Importing the Tenderedit component
 import SystemUsers from "./pages/admin/System-user.tsx"; // Importing the SystemUser component
 import Createpayment from "./pages/admin/Createpayment.tsx"; // Importing the Createpayment component
+import Home from "./pages/Home.tsx"; // Importing the Home component
 
 
 
@@ -22,6 +23,10 @@ function App() {
   return (
     <Router>
       <Routes>
+
+        <Route path="/" element={<Home />} />
+           
+         {/* Admin/dashboard  pages */}
         <Route path="/admin/tender-create" element={<TenderCreate />} />
         <Route path="/login" element={<Login />} />
         <Route path="/Signup" element={<Signup  />} />
