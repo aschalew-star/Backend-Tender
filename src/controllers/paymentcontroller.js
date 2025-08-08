@@ -15,46 +15,60 @@ const createPayment = asynerror(async (req, res, next) => {
     const { customerId, bankId, price, howLong } = req.body;
 
     const customer = await prisma.customer.findUnique({ where: { id: parseInt(customerId) } });
-    if (!customer) {
-      return next(new handleError('Customer not found', 404));
-    }
+    if (!customer) return next(new handleError('Customer not found', 404));
 
     const bank = await prisma.bank.findUnique({ where: { id: parseInt(bankId) } });
-    if (!bank) {
-      return next(new handleError('Bank not found', 404));
-    }
+    if (!bank) return next(new handleError('Bank not found', 404));
 
-    const payment = await prisma.$transaction(async (tx) => {
-      const newPayment = await tx.payment.create({
-        data: {
-          customerId: parseInt(customerId),
-          bankId: parseInt(bankId),
-          price: parseFloat(price),
-          howLong,
-          // approvedById: req.user.role === 'SUPERUSER' || req.user.role === 'ADMIN' ? req.user.id : null,
-          // approvedAt: req.user.role === 'SUPERUSER' || req.user.role === 'ADMIN' ? new Date() : null,
-        },
-        include: {
-          customer: { select: { id: true, firstName: true, lastName: true, email: true } },
-          bank: { select: { id: true, name: true } },
-          approvedBy: { select: { id: true, firstName: true, lastName: true } },
-        },
+    let payment; // ✅ Declare variable outside
+
+    if (howLong !== 'TENDER') {
+      payment = await prisma.$transaction(async (tx) => {
+        const newPayment = await tx.payment.create({
+          data: {
+            customerId: parseInt(customerId),
+            bankId: parseInt(bankId),
+            price: parseFloat(price),
+            howLong,
+          },
+          include: {
+            customer: { select: { id: true, firstName: true, lastName: true, email: true } },
+            bank: { select: { id: true, name: true } },
+            approvedBy: { select: { id: true, firstName: true, lastName: true } },
+          },
+        });
+
+       const remainder= await tx.reminder.create({
+          data: { customerId: parseInt(customerId) },
+          include: {
+            customer: { select: { id: true, firstName: true, lastName: true, email: true } },
+          },
+       });
+        
+        console.log("from remainder payment ",remainder)
+        
+
+        return newPayment;
       });
+    } else {
+      payment = await prisma.$transaction(async (tx) => {
+        const newPayment = await tx.payment.create({
+          data: {
+            customerId: parseInt(customerId),
+            bankId: parseInt(bankId),
+            price: parseFloat(price),
+            howLong,
+          },
+          include: {
+            customer: { select: { id: true, firstName: true, lastName: true, email: true } },
+            bank: { select: { id: true, name: true } },
+            approvedBy: { select: { id: true, firstName: true, lastName: true } },
+          },
+        });
 
-      // await tx.activityLog.create({
-      //   data: {
-      //     method: 'POST',
-      //     role: req.user.role,
-      //     action: 'CREATE_PAYMENT',
-      //     userId: req.user.id,
-      //     customerId: parseInt(customerId),
-      //     detail: `Created payment ID: ${newPayment.id} for customer ID: ${customerId}`,
-      //     createdAt: new Date(),
-      //   },
-      // });
-
-      return newPayment;
-    });
+        return newPayment;
+      });
+    }
 
     res.status(201).json({
       status: 'success',
@@ -66,6 +80,7 @@ const createPayment = asynerror(async (req, res, next) => {
     return next(new handleError('Failed to create payment', 500));
   }
 });
+
 
 /**
  * Get all payments with pagination

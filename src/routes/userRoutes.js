@@ -1,8 +1,8 @@
 const express = require('express');
 const { createUser,
-  getAllCustomerUsers,
+  getAllCustomerUsers,deleteSystemUser,
   getSystemUsers, updateSystemUser,
-  getCustomerByEmail,
+  getCustomerByEmail,updateUser,deletecustomer,
     loginUser,getCustomersForPaymentForm
     // , getUserById, getAllUsers, updateUser, deleteUser, forgetPassword, changePassword
 } = require('../controllers/userController.js');
@@ -20,6 +20,9 @@ router.get('/systemuser',   getSystemUsers);
 router.get('/email',   getCustomerByEmail);
 router.put('/systemuser/:id', updateSystemUser);
 router.get('/payform', getCustomersForPaymentForm);
+router.put('/updateUser/:id', updateUser);
+router.delete('/deletesystem/:id', deleteSystemUser);
+router.delete('/deletecustomer/:id', deletecustomer);
 
 
 // router.post('/forget-password', forgetPassword);

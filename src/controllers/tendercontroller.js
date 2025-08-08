@@ -3,6 +3,9 @@ const asynerror = require('../utili/asyncerror.js');
 const handleError = require('../utili/errorhandle.js');
 const {PRICETYPE} = require('@prisma/client');
 const winston = require('winston');
+const  { queueNotificationsForNewTender } = require('../utili/generateNotification.js');
+const fs = require('fs');
+const path = require('path');
 
 const createtender = asynerror(async (req, res, next) => {
   const {
@@ -16,9 +19,6 @@ const createtender = asynerror(async (req, res, next) => {
     tenderDocs = [],
     biddingDocs = [],
   } = req.body;
-
-  console.log('Request body:', req.body);
-  console.log('Request files:', req.files);
 
   const parseField = (field) => {
     try {
@@ -70,7 +70,6 @@ const createtender = asynerror(async (req, res, next) => {
     );
   }
 
-  // Group indexed files
   const tenderDocFiles = [];
   const biddingDocFiles = [];
   for (const file of req.files || []) {
@@ -152,7 +151,7 @@ const createtender = asynerror(async (req, res, next) => {
             create: parsedTenderDocs.map((doc, i) => ({
               name: doc.name,
               title: doc.title,
-              file: tenderDocFiles[i]?.path || '',
+              file: tenderDocFiles[i]?.filename || '',
               price: doc.price ? parseFloat(doc.price) : null,
               type: doc.type,
               createdAt: new Date(),
@@ -163,7 +162,7 @@ const createtender = asynerror(async (req, res, next) => {
               title: doc.title,
               description: doc.description,
               company: doc.company,
-              file: biddingDocFiles[i]?.path || '',
+              file: biddingDocFiles[i]?.filename || '',
               price: doc.price ? parseFloat(doc.price) : null,
               type: doc.type,
             })),
@@ -180,6 +179,9 @@ const createtender = asynerror(async (req, res, next) => {
       return createdTender;
     });
 
+    console.log('Manually triggering notifications for tender:', tender.title);
+    await queueNotificationsForNewTender(tender);
+
     res.status(201).json({
       status: 'success',
       message: 'Tender created successfully',
@@ -191,114 +193,6 @@ const createtender = asynerror(async (req, res, next) => {
   }
 });
 
-
-// const createTenderNoFiles = asynerror(async (req, res, next) => {
-//   const {
-//     title,
-//     description,
-//     biddingOpen,
-//     biddingClosed,
-//     categoryName,
-//     subcategoryName,
-//     type,
-//     tenderDocs = [],
-//     biddingDocs = [],
-//     reminders = [],
-//   } = req.body;
-
-//   const tender = await prisma.$transaction(async (tx) => {
-//     let category = await tx.category.findUnique({ where: { name: categoryName } });
-//     if (!category) {
-//       category = await tx.category.create({
-//         data: { name: categoryName, createdAt: new Date() },
-//       });
-//       winston.info(`Created category: ${categoryName} (ID: ${category.id})`);
-//     }
-
-//     let subcategory = await tx.subcategory.findFirst({
-//       where: { name: subcategoryName, categoryId: category.id },
-//     });
-//     if (!subcategory) {
-//       subcategory = await tx.subcategory.create({
-//         data: {
-//           name: subcategoryName,
-//           categoryId: category.id,
-//           createdBy: req.user.id,
-//           createdAt: new Date(),
-//         },
-//       });
-//       winston.info(`Created subcategory: ${subcategoryName} (ID: ${subcategory.id}) for category ID ${category.id}`);
-//     }
-
-//     const tender = await tx.tender.create({
-//       data: {
-//         title,
-//         description,
-//         biddingOpen: new Date(biddingOpen),
-//         biddingClosed: new Date(biddingClosed),
-//         categoryId: category.id,
-//         subcategoryId: subcategory.id,
-//         postedById: req.user.id,
-//         type,
-//         tenderDocs: {
-//           create: tenderDocs.map((doc) => ({
-//             name: doc.name,
-//             title: doc.title,
-//             file: doc.file,
-//             price: doc.price ? parseFloat(doc.price) : null,
-//             type: doc.type,
-//             createdAt: new Date(),
-//           })),
-//         },
-//         biddingDocs: {
-//           create: biddingDocs.map((doc) => ({
-//             title: doc.title,
-//             description: doc.description,
-//             company: doc.company,
-//             file: doc.file,
-//             price: doc.price ? parseFloat(doc.price) : null,
-//             type: doc.type,
-//           })),
-//         },
-//         reminders: {
-//           create: reminders.map((reminder) => ({
-//             dueDate: new Date(reminder.dueDate),
-//             type: reminder.type,
-//             userId: req.user.id,
-//           })),
-//         },
-//       },
-//       include: {
-//         category: true,
-//         subcategory: true,
-//         postedBy: { select: { id: true, firstName: true, lastName: true, email: true, role: true } },
-//         approvedBy: { select: { id: true, firstName: true, lastName: true, email: true, role: true } },
-//         tenderDocs: true,
-//         biddingDocs: true,
-//         reminders: true,
-//       },
-//     });
-
-//     await tx.activityLog.create({
-//       data: {
-//         method: 'POST',
-//         role: req.user.role,
-//         action: 'CREATE_TENDER',
-//         userId: req.user.id,
-//         detail: `Created tender: ${title} (ID: ${tender.id})`,
-//         createdAt: new Date(),
-//       },
-//     });
-
-//     return tender;
-//   });
-
-//   res.status(201).json({
-//     status: 'success',
-//     data: tender,
-//     message: 'Tender created successfully',
-//   });
-// });
 
 const getAllTenders = asynerror(async (req, res, next) => {
   const { page = 1, limit = 15, categoryId, subcategoryId } = req.query;
@@ -363,6 +257,7 @@ const getAllTenders = asynerror(async (req, res, next) => {
           title: doc.title,
           type: doc.type,
           price: doc.price ? doc.price.toString() : '',
+          file:doc.file
         })),
         biddingDocs: tender.biddingDocs.map((doc) => ({
           title: doc.title,
@@ -370,6 +265,8 @@ const getAllTenders = asynerror(async (req, res, next) => {
           company: doc.company,
           type: doc.type,
           price: doc.price ? doc.price.toString() : '',
+          file:doc.file
+
         })),
         postedBy: tender.postedBy || null,
         approvedBy: tender.approvedBy || null,
@@ -413,114 +310,254 @@ const getAllTenders = asynerror(async (req, res, next) => {
 //   res.json({ status: 'success', data: tender });
 // });
 
-// const updateTender = asynerror(async (req, res, next) => {
-//   const {
-//     title,
-//     description,
-//     biddingOpen,
-//     biddingClosed,
-//     categoryName,
-//     subcategoryName,
-//     type,
-//     tenderDocs = [],
-//     biddingDocs = [],
-//     reminders = [],
-//   } = req.body;
+// Configure logging
+const logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.json()
+  ),
+  transports: [
+    new winston.transports.File({ filename: 'tender.log' }),
+    new winston.transports.Console(),
+  ],
+});
 
-//   const tender = await prisma.$transaction(async (tx) => {
-//     let category = await tx.category.findUnique({ where: { name: categoryName } });
-//     if (!category) {
-//       category = await tx.category.create({
-//         data: { name: categoryName, createdAt: new Date() },
-//       });
-//       winston.info(`Created category: ${categoryName} (ID: ${category.id})`);
-//     }
+// Centralized file deletion helper
+const deleteFileIfExists = async (filename) => {
+  if (!filename) return;
+  try {
+    const filePath = path.join(__dirname, '../Uploads', filename);
+    if (await fs.access(filePath).then(() => true).catch(() => false)) {
+      await fs.unlink(filePath);
+      logger.info(`Deleted file: ${filename}`);
+    }
+  } catch (error) {
+    logger.error(`Failed to delete file ${filename}: ${error.message}`);
+  }
+};
 
-//     let subcategory = await tx.subcategory.findFirst({
-//       where: { name: subcategoryName, categoryId: category.id },
-//     });
-//     if (!subcategory) {
-//       subcategory = await tx.subcategory.create({
-//         data: {
-//           name: subcategoryName,
-//           categoryId: category.id,
-//           createdBy: req.user.id,
-//           createdAt: new Date(),
-//         },
-//       });
-//       winston.info(`Created subcategory: ${subcategoryName} (ID: ${subcategory.id}) for category ID ${category.id}`);
-//     }
+// Validate file type
+const validateFileType = (file) => {
+  const allowedMimeTypes = [
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  ];
+  if (!allowedMimeTypes.includes(file.mimetype)) {
+    logger.error(`Invalid file type: ${file.originalname}`);
+    throw new handleError(`Invalid file type for ${file.originalname}. Allowed: PDF, DOC, DOCX`, 400);
+  }
+};
 
-//     await tx.tenderDoc.deleteMany({ where: { tenderId: parseInt(req.params.id) } });
-//     await tx.biddingDoc.deleteMany({ where: { tenderId: parseInt(req.params.id) } });
-//     await tx.reminder.deleteMany({ where: { tenderId: parseInt(req.params.id) } });
+// Main updateTender function
+const updateTender = asynerror(async (req, res, next) => {
+  const {
+    title,
+    description,
+    biddingOpen,
+    biddingClosed,
+    categoryName,
+    subcategoryName,
+    type,
+    tenderDocs = '[]',
+    biddingDocs = '[]',
+  } = req.body;
 
-//     const updatedTender = await tx.tender.update({
-//       where: { id: parseInt(req.params.id) },
-//       data: {
-//         title,
-//         description,
-//         biddingOpen: new Date(biddingOpen),
-//         biddingClosed: new Date(biddingClosed),
-//         categoryId: category.id,
-//         subcategoryId: subcategory.id,
-//         postedById: req.user.id,
-//         type,
-//         tenderDocs: {
-//           create: tenderDocs.map((doc) => ({
-//             name: doc.name,
-//             title: doc.title,
-//             file: doc.file,
-//             price: doc.price ? parseFloat(doc.price) : null,
-//             type: doc.type,
-//             createdAt: new Date(),
-//           })),
-//         },
-//         biddingDocs: {
-//           create: biddingDocs.map((doc) => ({
-//             title: doc.title,
-//             description: doc.description,
-//             company: doc.company,
-//             file: doc.file,
-//             price: doc.price ? parseFloat(doc.price) : null,
-//             type: doc.type,
-//           })),
-//         },
-//         reminders: {
-//           create: reminders.map((reminder) => ({
-//             dueDate: new Date(reminder.dueDate),
-//             type: reminder.type,
-//             userId: req.user.id,
-//           })),
-//         },
-//       },
-//       include: {
-//         category: true,
-//         subcategory: true,
-//         postedBy: { select: { id: true, firstName: true, lastName: true, email: true } },
-//         approvedBy: { select: { id: true, firstName: true, lastName: true, email: true } },
-//         tenderDocs: true,
-//         biddingDocs: true,
-//         reminders: true,
-//       },
-//     });
+  const { id } = req.params;
 
-//     await tx.activityLog.create({
-//       data: {
-//         method: 'PUT',
-//         role: req.user.role,
-//         action: 'UPDATE_TENDER',
-//         userId: req.user.id,
-//         detail: `Updated tender: ${title} (ID: ${updatedTender.id})`,
-//         createdAt: new Date(),
-//       },
-//     });
+  // Validate tender ID
+  const tenderId = parseInt(id);
+  if (isNaN(tenderId) || tenderId <= 0) {
+    logger.error(`Invalid tender ID: ${id}`);
+    throw new handleError(`Invalid tender ID: ${id}`, 400);
+  }
 
-//     return updatedTender;
-//   });
+  logger.info(`Starting tender update for ID: ${tenderId}`);
 
-//   res.json({ status: 'success', data: tender, message: 'Tender updated successfully' });
-// });
+  // Parse JSON fields with validation
+  const parseField = (field, fieldName) => {
+    try {
+      const parsed = Array.isArray(field) ? field : JSON.parse(field);
+      if (!Array.isArray(parsed)) throw new Error('Not an array');
+      return parsed;
+    } catch (error) {
+      logger.error(`Invalid ${fieldName} format: ${error.message}`);
+      throw new handleError(`Invalid ${fieldName} format`, 400);
+    }
+  };
+
+  const parsedTenderDocs = parseField(tenderDocs, 'tenderDocs');
+  const parsedBiddingDocs = parseField(biddingDocs, 'biddingDocs');
+
+  // Validate and clean date inputs
+  const cleanDate = (value) => {
+    if (!value) return null;
+    const cleaned = typeof value === 'string' ? value.replace(/^"|"$/g, '') : value;
+    const parsed = new Date(cleaned);
+    if (isNaN(parsed)) {
+      logger.error(`Invalid date format: ${value}`);
+      throw new handleError(`Invalid date format for ${value}`, 400);
+    }
+    return parsed;
+  };
+
+  // Validate tender type
+  const cleanType = (value) => {
+    const allowedTypes = ['FREE', 'PAID'];
+    const cleaned = typeof value === 'string' ? value.toUpperCase() : 'FREE';
+    if (!allowedTypes.includes(cleaned)) {
+      logger.warn(`Invalid tender type ${value}, defaulting to FREE`);
+      return 'FREE';
+    }
+    return cleaned;
+  };
+
+  const openDate = cleanDate(biddingOpen);
+  const closeDate = cleanDate(biddingClosed);
+  const tenderType = cleanType(type);
+
+  // Organize uploaded files
+  const tenderDocFiles = [];
+  const biddingDocFiles = [];
+  (req.files || []).forEach(file => {
+    validateFileType(file);
+    if (file.fieldname.startsWith('tenderDocsFiles')) tenderDocFiles.push(file);
+    else if (file.fieldname.startsWith('biddingDocsFiles')) biddingDocFiles.push(file);
+  });
+
+  logger.info(`Received ${tenderDocFiles.length} tender files and ${biddingDocFiles.length} bidding files`);
+
+  // Validate file counts against metadata
+  parsedTenderDocs.forEach((doc, i) => {
+    if (doc.fileRequired && !tenderDocFiles[i] && !doc.existingFile) {
+      logger.error(`Missing file for tender document at index ${i}`);
+      throw new handleError(`Missing file for tender document at index ${i}`, 400);
+    }
+  });
+  parsedBiddingDocs.forEach((doc, i) => {
+    if (doc.fileRequired && !biddingDocFiles[i] && !doc.existingFile) {
+      logger.error(`Missing file for bidding document at index ${i}`);
+      throw new handleError(`Missing file for bidding document at index ${i}`, 400);
+    }
+  });
+
+  // Fetch existing tender
+  const oldTender = await prisma.tender.findUnique({
+    where: { id: tenderId },
+    include: { tenderDocs: true, biddingDocs: true },
+  });
+
+  if (!oldTender) {
+    logger.error(`Tender not found for ID: ${tenderId}`);
+    throw new handleError(`Tender not found for ID: ${tenderId}`, 404);
+  }
+
+  try {
+    const updatedTender = await prisma.$transaction(async (tx) => {
+      // Handle category
+      let category = await tx.category.findFirst({ where: { name: categoryName } });
+      if (!category) {
+        category = await tx.category.create({
+          data: { name: categoryName, createdAt: new Date() },
+        });
+        logger.info(`Created new category: ${categoryName}`);
+      }
+
+      // Handle subcategory
+      let subcategory = await tx.subcategory.findFirst({
+        where: { name: subcategoryName, categoryId: category.id },
+      });
+      if (!subcategory) {
+        subcategory = await tx.subcategory.create({
+          data: { name: subcategoryName, categoryId: category.id, createdAt: new Date() },
+        });
+        logger.info(`Created new subcategory: ${subcategoryName}`);
+      }
+
+      // Delete old documents if new metadata is provided
+      if (parsedTenderDocs.length > 0) {
+        await Promise.all(oldTender.tenderDocs.map(doc => deleteFileIfExists(doc.file)));
+        await tx.tenderDoc.deleteMany({ where: { tenderId: tenderId } });
+        logger.info(`Deleted ${oldTender.tenderDocs.length} existing tender documents for tender ID: ${tenderId}`);
+      }
+
+      if (parsedBiddingDocs.length > 0) {
+        await Promise.all(oldTender.biddingDocs.map(doc => deleteFileIfExists(doc.file)));
+        await tx.biddingDoc.deleteMany({ where: { tenderId: tenderId } });
+        logger.info(`Deleted ${oldTender.biddingDocs.length} existing bidding documents for tender ID: ${tenderId}`);
+      }
+
+      // Update tender
+      const updatedTender = await tx.tender.update({
+        where: { id: tenderId },
+        data: {
+          title,
+          description,
+          biddingOpen: openDate,
+          biddingClosed: closeDate,
+          type: tenderType,
+          category: { connect: { id: category.id } },
+          subcategory: { connect: { id: subcategory.id } },
+          tenderDocs: {
+            create: parsedTenderDocs
+              .filter(doc => doc.name && doc.title && doc.type)
+              .map((doc, i) => ({
+                name: doc.name,
+                title: doc.title,
+                type: doc.type,
+                file: tenderDocFiles[i]?.filename || doc.existingFile || '',
+                price: doc.price ? parseFloat(doc.price) : null,
+                createdAt: new Date(),
+              })),
+          },
+          biddingDocs: {
+            create: parsedBiddingDocs
+              .filter(doc => doc.title && doc.description && doc.company && doc.type)
+              .map((doc, i) => ({
+                title: doc.title,
+                description: doc.description,
+                company: doc.company,
+                type: doc.type,
+                file: biddingDocFiles[i]?.filename || doc.existingFile || '',
+                price: doc.price ? parseFloat(doc.price) : null,
+                createdAt: new Date(),
+              })),
+          },
+        },
+        include: {
+          tenderDocs: true,
+          biddingDocs: true,
+          category: true,
+          subcategory: true,
+        },
+      });
+
+      logger.info(`Tender updated successfully: ID ${tenderId}`);
+      return updatedTender;
+    });
+
+    res.status(200).json({
+      message: 'Tender updated successfully',
+      tender: {
+        id: updatedTender.id,
+        title: updatedTender.title,
+        description: updatedTender.description,
+        biddingOpen: updatedTender.biddingOpen,
+        biddingClosed: updatedTender.biddingClosed,
+        type: updatedTender.type,
+        category: updatedTender.category.name,
+        subcategory: updatedTender.subcategory.name,
+        tenderDocs: updatedTender.tenderDocs,
+        biddingDocs: updatedTender.biddingDocs,
+      },
+    });
+  } catch (error) {
+    logger.error(`Error updating tender ID ${tenderId}: ${error.message}`);
+    next(error instanceof handleError ? error : new handleError('Failed to update tender', 500));
+  }
+});
+
 
 // const deleteTender = asynerror(async (req, res, next) => {
 //   await prisma.$transaction(async (tx) => {
@@ -715,7 +752,7 @@ const getAllTenders = asynerror(async (req, res, next) => {
 
 module.exports = {
   createtender,
-  getAllTenders
+  getAllTenders,updateTender
   // createTenderNoFiles,
   // getAllTenders,
   // getTenderById,

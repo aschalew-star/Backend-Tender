@@ -8,6 +8,8 @@ const subcatagory = require('./routes/sucatagoryroute.js');
 const region = require('./routes/Region.js');
 const Bank = require('./routes/Bank.js');
 const payment = require('./routes/payment.js');
+const { runSubscriptionCheck } = require("./utili/Scheduler.js")
+const path = require('path');
 
 dotenv.config();
 
@@ -19,11 +21,18 @@ app.use(cors(
     origin: ['http://localhost:3000', 'https://your-production-url.com',
       'http://localhost:5173',
     ],
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE','PATCH'],
     credentials: true,
   }
 ));
 app.use(cookieParser());
+
+runSubscriptionCheck()
+
+//get static files like documents
+// Serve /Uploads folder as /uploads in browser
+// app.use('/uploads', express.static(path.join(__dirname, 'Uploads')));
+app.use(express.static(path.join(__dirname, 'Uploads')));
 
 app.get('/test', (req, res) => {
   res.json({ message: 'Hello from the server!' });

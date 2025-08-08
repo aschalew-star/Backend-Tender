@@ -1,0 +1,139 @@
+{"level":"info","message":"Starting tender update for ID: 16","timestamp":"2025-08-08T12:47:41.735Z"}
+{"level":"error","message":"Failed to delete file 1754656317774-236547084-Document1.pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T12:47:41.758Z"}
+{"level":"error","message":"Failed to delete file 1754656317775-51201569-Documentation_ETAid_online_aiding_platform_N 2016_E.pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T12:47:41.759Z"}
+{"level":"error","message":"Failed to delete file 1754656317798-561590641-Document1(1).pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T12:47:41.760Z"}
+{"level":"error","message":"Failed to delete file 1754656317801-162557324-Document1.pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T12:47:41.760Z"}
+{"level":"error","message":"Failed to delete file 1754656317801-631936792-Documentation_ETAid_online_aiding_platform_N 2016_E.pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T12:47:41.761Z"}
+{"level":"info","message":"Deleted existing tender documents for tender ID: 16","timestamp":"2025-08-08T12:47:41.847Z"}
+{"level":"info","message":"Tender updated successfully: ID 16","timestamp":"2025-08-08T12:47:41.857Z"}
+{"level":"info","message":"Starting tender update for ID: 16","timestamp":"2025-08-08T12:49:04.370Z"}
+{"level":"error","message":"Missing file for tender document at index 1","timestamp":"2025-08-08T12:49:04.371Z"}
+{"level":"info","message":"Starting tender update for ID: 16","timestamp":"2025-08-08T12:49:40.872Z"}
+{"level":"error","message":"Missing file for tender document at index 1","timestamp":"2025-08-08T12:49:40.872Z"}
+{"level":"info","message":"Starting tender update for ID: 16","timestamp":"2025-08-08T12:50:11.478Z"}
+{"level":"error","message":"Missing file for tender document at index 1","timestamp":"2025-08-08T12:50:11.479Z"}
+{"level":"info","message":"Starting tender update for ID: 16","timestamp":"2025-08-08T12:50:22.280Z"}
+{"level":"error","message":"Missing file for tender document at index 4","timestamp":"2025-08-08T12:50:22.280Z"}
+{"level":"info","message":"Starting tender update for ID: 16","timestamp":"2025-08-08T12:58:09.673Z"}
+{"level":"info","message":"Received 0 tender files and 0 bidding files","timestamp":"2025-08-08T12:58:09.677Z"}
+{"level":"info","message":"Created new category: cdskja","timestamp":"2025-08-08T12:58:09.775Z"}
+{"level":"info","message":"Created new subcategory: jhcxm","timestamp":"2025-08-08T12:58:09.783Z"}
+{"level":"error","message":"Failed to delete file 1754657261326-21621665-Documentation_ETAid_online_aiding_platform_N 2016_E.pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T12:58:09.784Z"}
+{"level":"error","message":"Failed to delete file 1754656317775-51201569-Documentation_ETAid_online_aiding_platform_N 2016_E.pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T12:58:09.786Z"}
+{"level":"error","message":"Failed to delete file 1754656317798-561590641-Document1(1).pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T12:58:09.787Z"}
+{"level":"error","message":"Failed to delete file 1754656317801-162557324-Document1.pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T12:58:09.788Z"}
+{"level":"error","message":"Failed to delete file 1754656317801-631936792-Documentation_ETAid_online_aiding_platform_N 2016_E.pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T12:58:09.788Z"}
+{"level":"info","message":"Deleted 5 existing tender documents for tender ID: 16","timestamp":"2025-08-08T12:58:09.794Z"}
+{"level":"info","message":"Tender updated successfully: ID 16","timestamp":"2025-08-08T12:58:09.807Z"}
+{"level":"info","message":"Starting tender update for ID: 16","timestamp":"2025-08-08T12:58:20.172Z"}
+{"level":"info","message":"Received 0 tender files and 0 bidding files","timestamp":"2025-08-08T12:58:20.172Z"}
+{"level":"error","message":"Failed to delete file 1754657261326-21621665-Documentation_ETAid_online_aiding_platform_N 2016_E.pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T12:58:20.181Z"}
+{"level":"error","message":"Failed to delete file 1754656317775-51201569-Documentation_ETAid_online_aiding_platform_N 2016_E.pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T12:58:20.182Z"}
+{"level":"error","message":"Failed to delete file 1754656317798-561590641-Document1(1).pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T12:58:20.183Z"}
+{"level":"error","message":"Failed to delete file 1754656317801-162557324-Document1.pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T12:58:20.184Z"}
+{"level":"error","message":"Failed to delete file 1754656317801-631936792-Documentation_ETAid_online_aiding_platform_N 2016_E.pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T12:58:20.185Z"}
+{"level":"info","message":"Deleted 5 existing tender documents for tender ID: 16","timestamp":"2025-08-08T12:58:20.188Z"}
+{"level":"info","message":"Tender updated successfully: ID 16","timestamp":"2025-08-08T12:58:20.196Z"}
+{"level":"info","message":"Starting tender update for ID: 16","timestamp":"2025-08-08T12:58:54.261Z"}
+{"level":"info","message":"Received 1 tender files and 0 bidding files","timestamp":"2025-08-08T12:58:54.262Z"}
+{"level":"error","message":"Failed to delete file 1754657261326-21621665-Documentation_ETAid_online_aiding_platform_N 2016_E.pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T12:58:54.270Z"}
+{"level":"error","message":"Failed to delete file 1754656317775-51201569-Documentation_ETAid_online_aiding_platform_N 2016_E.pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T12:58:54.270Z"}
+{"level":"error","message":"Failed to delete file 1754656317798-561590641-Document1(1).pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T12:58:54.271Z"}
+{"level":"error","message":"Failed to delete file 1754656317801-162557324-Document1.pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T12:58:54.272Z"}
+{"level":"error","message":"Failed to delete file 1754656317801-631936792-Documentation_ETAid_online_aiding_platform_N 2016_E.pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T12:58:54.272Z"}
+{"level":"info","message":"Deleted 5 existing tender documents for tender ID: 16","timestamp":"2025-08-08T12:58:54.274Z"}
+{"level":"info","message":"Tender updated successfully: ID 16","timestamp":"2025-08-08T12:58:54.281Z"}
+{"level":"info","message":"Starting tender update for ID: 17","timestamp":"2025-08-08T12:59:55.067Z"}
+{"level":"info","message":"Received 0 tender files and 0 bidding files","timestamp":"2025-08-08T12:59:55.067Z"}
+{"level":"info","message":"Tender updated successfully: ID 17","timestamp":"2025-08-08T12:59:55.078Z"}
+{"level":"info","message":"Starting tender update for ID: 17","timestamp":"2025-08-08T13:00:27.997Z"}
+{"level":"info","message":"Received 1 tender files and 0 bidding files","timestamp":"2025-08-08T13:00:27.998Z"}
+{"level":"info","message":"Deleted 0 existing tender documents for tender ID: 17","timestamp":"2025-08-08T13:00:28.009Z"}
+{"level":"info","message":"Tender updated successfully: ID 17","timestamp":"2025-08-08T13:00:28.040Z"}
+{"level":"info","message":"Starting tender update for ID: 17","timestamp":"2025-08-08T13:01:52.493Z"}
+{"level":"info","message":"Tender updated successfully: ID 17","timestamp":"2025-08-08T13:01:52.715Z"}
+{"level":"info","message":"Starting tender update for ID: 17","timestamp":"2025-08-08T13:02:05.198Z"}
+{"level":"info","message":"Tender updated successfully: ID 17","timestamp":"2025-08-08T13:02:05.213Z"}
+{"level":"info","message":"Starting tender update for ID: 17","timestamp":"2025-08-08T13:02:16.529Z"}
+{"level":"info","message":"Tender updated successfully: ID 17","timestamp":"2025-08-08T13:02:16.544Z"}
+{"level":"info","message":"Starting tender update for ID: 17","timestamp":"2025-08-08T13:02:44.845Z"}
+{"level":"error","message":"Failed to delete file 1754658027976-366479700-Document1.pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T13:02:44.856Z"}
+{"level":"info","message":"Deleted existing tender documents for tender ID: 17","timestamp":"2025-08-08T13:02:44.861Z"}
+{"level":"info","message":"Tender updated successfully: ID 17","timestamp":"2025-08-08T13:02:44.870Z"}
+{"level":"info","message":"Starting tender update for ID: 17","timestamp":"2025-08-08T13:03:08.985Z"}
+{"level":"error","message":"Failed to delete file 1754658164842-713221370-Document1.pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T13:03:08.996Z"}
+{"level":"info","message":"Deleted existing tender documents for tender ID: 17","timestamp":"2025-08-08T13:03:08.998Z"}
+{"level":"info","message":"Tender updated successfully: ID 17","timestamp":"2025-08-08T13:03:09.007Z"}
+{"level":"info","message":"Starting tender update for ID: 17","timestamp":"2025-08-08T13:03:31.144Z"}
+{"level":"error","message":"Failed to delete file 1754658188980-550855386-Document1.pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T13:03:31.156Z"}
+{"level":"error","message":"Failed to delete file 1754658188981-762405154-Document1.pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T13:03:31.157Z"}
+{"level":"info","message":"Deleted existing tender documents for tender ID: 17","timestamp":"2025-08-08T13:03:31.159Z"}
+{"level":"info","message":"Tender updated successfully: ID 17","timestamp":"2025-08-08T13:03:31.167Z"}
+{"level":"info","message":"Starting tender update for ID: 17","timestamp":"2025-08-08T13:03:48.468Z"}
+{"level":"error","message":"Failed to delete file 1754658211140-556835622-Document1.pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T13:03:48.480Z"}
+{"level":"error","message":"Failed to delete file 1754658211141-862178036-Document1.pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T13:03:48.481Z"}
+{"level":"error","message":"Failed to delete file 1754658211141-30557672-Document1.pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T13:03:48.481Z"}
+{"level":"info","message":"Deleted existing tender documents for tender ID: 17","timestamp":"2025-08-08T13:03:48.484Z"}
+{"level":"info","message":"Tender updated successfully: ID 17","timestamp":"2025-08-08T13:03:48.492Z"}
+{"level":"info","message":"Starting tender update for ID: 17","timestamp":"2025-08-08T13:04:03.159Z"}
+{"level":"error","message":"Failed to delete file 1754658228399-857951165-Documentation_ETAid_online_aiding_platform_N 2016_E.pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T13:04:03.167Z"}
+{"level":"error","message":"Failed to delete file 1754658228450-577532925-Document1.pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T13:04:03.167Z"}
+{"level":"error","message":"Failed to delete file 1754658228451-863329123-Document1.pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T13:04:03.169Z"}
+{"level":"info","message":"Deleted existing tender documents for tender ID: 17","timestamp":"2025-08-08T13:04:03.172Z"}
+{"level":"info","message":"Tender updated successfully: ID 17","timestamp":"2025-08-08T13:04:03.179Z"}
+{"level":"info","message":"Starting tender update for ID: 17","timestamp":"2025-08-08T13:07:48.437Z"}
+{"level":"info","message":"Tender updated successfully: ID 17","timestamp":"2025-08-08T13:07:48.490Z"}
+{"level":"info","message":"Starting tender update for ID: 17","timestamp":"2025-08-08T13:08:17.655Z"}
+{"level":"info","message":"Tender updated successfully: ID 17","timestamp":"2025-08-08T13:08:17.669Z"}
+{"level":"info","message":"Starting tender update for ID: 17","timestamp":"2025-08-08T13:09:23.573Z"}
+{"level":"info","message":"Tender updated successfully: ID 17","timestamp":"2025-08-08T13:09:23.585Z"}
+{"level":"info","message":"Starting tender update for ID: 17","timestamp":"2025-08-08T13:14:17.454Z"}
+{"level":"info","message":"Received 0 tender files and 0 bidding files","timestamp":"2025-08-08T13:14:17.459Z"}
+{"level":"error","message":"Failed to delete file 1754658243104-249582343-Documentation_ETAid_online_aiding_platform_N 2016_E.pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T13:14:17.476Z"}
+{"level":"error","message":"Failed to delete file 1754658243149-965981970-Document1(1).pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T13:14:17.479Z"}
+{"level":"error","message":"Failed to delete file 1754658243157-163060889-Document1.pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T13:14:17.480Z"}
+{"level":"error","message":"Failed to delete file 1754658243104-249582343-Documentation_ETAid_online_aiding_platform_N 2016_E.pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T13:14:17.481Z"}
+{"level":"error","message":"Failed to delete file 1754658243149-965981970-Document1(1).pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T13:14:17.483Z"}
+{"level":"error","message":"Failed to delete file 1754658243157-163060889-Document1.pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T13:14:17.484Z"}
+{"level":"error","message":"Failed to delete file 1754658243104-249582343-Documentation_ETAid_online_aiding_platform_N 2016_E.pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T13:14:17.486Z"}
+{"level":"error","message":"Failed to delete file 1754658243157-163060889-Document1.pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T13:14:17.487Z"}
+{"level":"error","message":"Failed to delete file 1754658243157-163060889-Document1.pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T13:14:17.489Z"}
+{"level":"error","message":"Failed to delete file 1754658243104-249582343-Documentation_ETAid_online_aiding_platform_N 2016_E.pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T13:14:17.489Z"}
+{"level":"error","message":"Failed to delete file 1754658243149-965981970-Document1(1).pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T13:14:17.490Z"}
+{"level":"error","message":"Failed to delete file 1754658243104-249582343-Documentation_ETAid_online_aiding_platform_N 2016_E.pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T13:14:17.491Z"}
+{"level":"error","message":"Failed to delete file 1754658243149-965981970-Document1(1).pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T13:14:17.492Z"}
+{"level":"error","message":"Failed to delete file 1754658243157-163060889-Document1.pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T13:14:17.493Z"}
+{"level":"info","message":"Deleted 14 existing tender documents for tender ID: 17","timestamp":"2025-08-08T13:14:17.502Z"}
+{"level":"info","message":"Tender updated successfully: ID 17","timestamp":"2025-08-08T13:14:17.521Z"}
+{"level":"info","message":"Starting tender update for ID: 17","timestamp":"2025-08-08T13:14:49.043Z"}
+{"level":"info","message":"Received 0 tender files and 0 bidding files","timestamp":"2025-08-08T13:14:49.043Z"}
+{"level":"error","message":"Failed to delete file 1754658243149-965981970-Document1(1).pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T13:14:49.052Z"}
+{"level":"error","message":"Failed to delete file 1754658243157-163060889-Document1.pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T13:14:49.053Z"}
+{"level":"error","message":"Failed to delete file 1754658243104-249582343-Documentation_ETAid_online_aiding_platform_N 2016_E.pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T13:14:49.054Z"}
+{"level":"error","message":"Failed to delete file 1754658243149-965981970-Document1(1).pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T13:14:49.056Z"}
+{"level":"error","message":"Failed to delete file 1754658243157-163060889-Document1.pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T13:14:49.056Z"}
+{"level":"error","message":"Failed to delete file 1754658243104-249582343-Documentation_ETAid_online_aiding_platform_N 2016_E.pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T13:14:49.057Z"}
+{"level":"error","message":"Failed to delete file 1754658243157-163060889-Document1.pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T13:14:49.057Z"}
+{"level":"error","message":"Failed to delete file 1754658243157-163060889-Document1.pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T13:14:49.058Z"}
+{"level":"error","message":"Failed to delete file 1754658243104-249582343-Documentation_ETAid_online_aiding_platform_N 2016_E.pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T13:14:49.058Z"}
+{"level":"error","message":"Failed to delete file 1754658243149-965981970-Document1(1).pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T13:14:49.059Z"}
+{"level":"error","message":"Failed to delete file 1754658243104-249582343-Documentation_ETAid_online_aiding_platform_N 2016_E.pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T13:14:49.059Z"}
+{"level":"error","message":"Failed to delete file 1754658243149-965981970-Document1(1).pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T13:14:49.060Z"}
+{"level":"error","message":"Failed to delete file 1754658243157-163060889-Document1.pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T13:14:49.060Z"}
+{"level":"info","message":"Deleted 13 existing tender documents for tender ID: 17","timestamp":"2025-08-08T13:14:49.063Z"}
+{"level":"info","message":"Tender updated successfully: ID 17","timestamp":"2025-08-08T13:14:49.073Z"}
+{"level":"info","message":"Starting tender update for ID: 17","timestamp":"2025-08-08T13:29:11.249Z"}
+{"level":"info","message":"Received 0 tender files and 0 bidding files","timestamp":"2025-08-08T13:29:11.249Z"}
+{"level":"error","message":"Failed to delete file 1754658243104-249582343-Documentation_ETAid_online_aiding_platform_N 2016_E.pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T13:29:11.257Z"}
+{"level":"error","message":"Failed to delete file 1754658243149-965981970-Document1(1).pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T13:29:11.258Z"}
+{"level":"error","message":"Failed to delete file 1754658243157-163060889-Document1.pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T13:29:11.258Z"}
+{"level":"error","message":"Failed to delete file 1754658243104-249582343-Documentation_ETAid_online_aiding_platform_N 2016_E.pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T13:29:11.259Z"}
+{"level":"error","message":"Failed to delete file 1754658243157-163060889-Document1.pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T13:29:11.259Z"}
+{"level":"error","message":"Failed to delete file 1754658243157-163060889-Document1.pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T13:29:11.260Z"}
+{"level":"error","message":"Failed to delete file 1754658243104-249582343-Documentation_ETAid_online_aiding_platform_N 2016_E.pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T13:29:11.260Z"}
+{"level":"error","message":"Failed to delete file 1754658243149-965981970-Document1(1).pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T13:29:11.261Z"}
+{"level":"error","message":"Failed to delete file 1754658243104-249582343-Documentation_ETAid_online_aiding_platform_N 2016_E.pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T13:29:11.261Z"}
+{"level":"error","message":"Failed to delete file 1754658243149-965981970-Document1(1).pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T13:29:11.261Z"}
+{"level":"error","message":"Failed to delete file 1754658243157-163060889-Document1.pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T13:29:11.262Z"}
+{"level":"info","message":"Deleted 11 existing tender documents for tender ID: 17","timestamp":"2025-08-08T13:29:11.267Z"}
+{"level":"info","message":"Tender updated successfully: ID 17","timestamp":"2025-08-08T13:29:11.278Z"}

@@ -4,6 +4,8 @@ const { UserRole } = require('@prisma/client');
 const asynerror = require('../utili/asyncerror.js');
 const bcrypt = require('bcryptjs');
 const handleError = require('../utili/errorhandle.js');
+// const { transporter } = require('../utili/Emailservice.js');
+const {sendRegistrationNotification}= require('../utili/generateNotification.js');
 
 const createUser = asynerror(async (req, res, next) => {
   const {
@@ -37,9 +39,15 @@ const createUser = asynerror(async (req, res, next) => {
       data: { email, firstName, lastName, password: hashedPassword, phone: phoneNo, role },
       select: { id: true, email: true, firstName: true, lastName: true, role: true },
     });
-
-    const token = jwt.sign({ id: customer.id, role: customer.role }, process.env.JWT_SECRET, { expiresIn: "1h" });
-    res.cookie("token", token, { httpOnly: true }).json(customer);
+     
+       // 🔔 Send notification to customer
+    await sendRegistrationNotification({
+      customerId: customer.id,
+      userType: 'CUSTOMER', // optional if you want to tag the type
+    });
+    // const token = jwt.sign({ id: customer.id, role: customer.role }, process.env.JWT_SECRET, { expiresIn: "1h" });
+    // res.cookie("token", token, { httpOnly: true }).json(customer);
+    res.json(customer);
   } else {
     const existingUser = await prisma.systemUser.findUnique({ where: { email } });
     if (existingUser) {
@@ -51,8 +59,15 @@ const createUser = asynerror(async (req, res, next) => {
       select: { id: true, email: true, firstName: true, lastName: true, role: true },
     });
 
-    const token = jwt.sign({ id: systemUser.id, role: systemUser.role }, process.env.JWT_SECRET, { expiresIn: "1h" });
-    res.cookie("token", token, { httpOnly: true }).json(systemUser);
+    // const token = jwt.sign({ id: systemUser.id, role: systemUser.role }, process.env.JWT_SECRET, { expiresIn: "1h" });
+    // res.cookie("token", token, { httpOnly: true }).json(systemUser);
+    // sendRegistrationNotification(systemUser)
+     await sendRegistrationNotification({
+      userId: systemUser.id,
+      userType: role,
+    });
+
+    res.json(systemUser);
   }
 });
 
@@ -263,37 +278,41 @@ const getCustomersForPaymentForm = asynerror(async (req, res, next) => {
 });
 
 
+// get customer and systemuser by id
+const getUserById = asynerror(async (req, res, next) => {
+  const { id } = req.params;
+  const userRole = req.user.role;
+  if (!id) {
+    return next(new handleError('User ID is required', 400));
+  }
+  if (isNaN(id)) {
+    return next(new handleError('Invalid User ID', 400));
+  }
 
-// const getUserById = asynerror(async (req, res, next) => {
-//   const { id } = req.params;
-//   const userRole = req.user.role;
-//   if (!id) {
-//     return next(new handleError('User ID is required', 400));
-//   }
-//   if (isNaN(id)) {
-//     return next(new handleError('Invalid User ID', 400));
-//   }
+  if (userRole === UserRole.CUSTOMER) {
+    const customer = await prisma.customer.findUnique({
+      where: { id: parseInt(id) },
+      select: { id: true, email: true, firstName: true, lastName: true, role: true, createdAt: true, updatedAt: true },
+    });
+    if (!customer) {
+      return next(new handleError('Customer not found', 404));
+    }
+    return res.json(customer);
+  } else {
+    const systemUser = await prisma.systemUser.findUnique({
+      where: { id: parseInt(id) },
+      select: { id: true, email: true, firstName: true, lastName: true, role: true, createdAt: true, updatedAt: true },
+    });
+    if (!systemUser) {
+      return next(new handleError('System user not found', 404));
+    }
+    return res.json(systemUser);
+  }
+});
 
-//   if (userRole === UserRole.CUSTOMER) {
-//     const customer = await prisma.customer.findUnique({
-//       where: { id: parseInt(id) },
-//       select: { id: true, email: true, firstName: true, lastName: true, role: true, createdAt: true, updatedAt: true },
-//     });
-//     if (!customer) {
-//       return next(new handleError('Customer not found', 404));
-//     }
-//     return res.json(customer);
-//   } else {
-//     const systemUser = await prisma.systemUser.findUnique({
-//       where: { id: parseInt(id) },
-//       select: { id: true, email: true, firstName: true, lastName: true, role: true, createdAt: true, updatedAt: true },
-//     });
-//     if (!systemUser) {
-//       return next(new handleError('System user not found', 404));
-//     }
-//     return res.json(systemUser);
-//   }
-// });
+
+
+// get systemuser
 const getSystemUsers = asynerror(async (req, res, next) => {
   const { page = 1, limit = 15, search, role } = req.query;
 
@@ -393,6 +412,7 @@ const getSystemUsers = asynerror(async (req, res, next) => {
 });
 
 
+//update systemuser
 const updateSystemUser = asynerror(async (req, res, next) => {
   const { id } = req.params;
   const { firstName, lastName, email, phoneNo, role, password } = req.body;
@@ -442,6 +462,8 @@ const updateSystemUser = asynerror(async (req, res, next) => {
   });
 });
 
+
+// delete system user
 const deleteSystemUser = asynerror(async (req, res, next) => {
   const { id } = req.params;
 
@@ -458,68 +480,52 @@ const deleteSystemUser = asynerror(async (req, res, next) => {
   res.json({ message: 'System user deleted successfully' });
 });
 
-// const updateUser = asynerror(async (req, res, next) => {
-//   const { id } = req.params;
-//   const { email, firstName, lastName, phoneNo, role } = req.body;
 
-//   if (!id || isNaN(id)) {
-//     return next(new handleError('Valid User ID is required', 400));
-//   }
+//update customer user
+const updateUser = asynerror(async (req, res, next) => {
+  const { id } = req.params;
+  const { email, firstName, lastName, phoneNo, role } = req.body;
 
-//   if (role && !Object.values(UserRole).includes(role)) {
-//     return next(new handleError(`Invalid role. Allowed roles are: ${Object.values(UserRole).join(', ')}`, 400));
-//   }
+  if (!id || isNaN(id)) {
+    return next(new handleError('Valid User ID is required', 400));
+  }
 
-//   if (role === UserRole.CUSTOMER) {
-//     const existingCustomer = await prisma.customer.findUnique({ where: { id: parseInt(id) } });
-//     if (!existingCustomer) {
-//       return next(new handleError('Customer not found', 404));
-//     }
+  if (role && !Object.values(UserRole).includes(role)) {
+    return next(new handleError(`Invalid role. Allowed roles are: ${Object.values(UserRole).join(', ')}`, 400));
+  }
 
-//     const updatedCustomer = await prisma.customer.update({
-//       where: { id: parseInt(id) },
-//       data: { email, firstName, lastName, phone: phoneNo, role },
-//       select: { id: true, email: true, firstName: true, lastName: true, role: true },
-//     });
-//     res.json(updatedCustomer);
-//   } else {
-//     const existingUser = await prisma.systemUser.findUnique({ where: { id: parseInt(id) } });
-//     if (!existingUser) {
-//       return next(new handleError('System user not found', 404));
-//     }
-//     const updatedSystemUser = await prisma.systemUser.update({
-//       where: { id: parseInt(id) },
-//       data: { email, firstName, lastName, phoneNo, role },
-//       select: { id: true, email: true, firstName: true, lastName: true, role: true },
-//     });
-//     res.json(updatedSystemUser);
-//   }
-// });
+  if (role === UserRole.CUSTOMER) {
+    const existingCustomer = await prisma.customer.findUnique({ where: { id: parseInt(id) } });
+    if (!existingCustomer) {
+      return next(new handleError('Customer not found', 404));
+    }
 
-// const deleteUser = asynerror(async (req, res, next) => {
-//   const { id } = req.params;
-//   const userRole = req.user.role;
+    const updatedCustomer = await prisma.customer.update({
+      where: { id: parseInt(id) },
+      data: { email, firstName, lastName, phone: phoneNo, role },
+      select: { id: true, email: true, firstName: true, lastName: true, role: true },
+    });
+    res.json(updatedCustomer);
+  } 
+});
 
-//   if (!id || isNaN(id)) {
-//     return next(new handleError('Valid User ID is required', 400));
-//   }
+const deletecustomer = asynerror(async (req, res, next) => {
+  const { id } = req.params;
 
-//   if (userRole === UserRole.CUSTOMER) {
-//     const existingCustomer = await prisma.customer.findUnique({ where: { id: parseInt(id) } });
-//     if (!existingCustomer) {
-//       return next(new handleError('Customer not found', 404));
-//     }
-//     await prisma.customer.delete({ where: { id: parseInt(id) } });
-//     return res.json({ message: 'Customer deleted successfully' });
-//   } else {
-//     const existingUser = await prisma.systemUser.findUnique({ where: { id: parseInt(id) } });
-//     if (!existingUser) {
-//       return next(new handleError('System user not found', 404));
-//     }
-//     await prisma.systemUser.delete({ where: { id: parseInt(id) } });
-//     return res.json({ message: 'System user deleted successfully' });
-//   }
-// });
+  if (!id || isNaN(id)) {
+    return next(new handleError('Valid User ID is required', 400));
+  }
+
+    const existingCustomer = await prisma.customer.findUnique({ where: { id: parseInt(id) } });
+    if (!existingCustomer) {
+      return next(new handleError('Customer not found', 404));
+    }
+
+    await prisma.customer.delete({ where: { id: parseInt(id) } });
+    return res.json({ message: 'Customer deleted successfully' });
+  
+});
+
 
 // const forgetPassword = asynerror(async (req, res, next) => {
 //   const { email } = req.body;
@@ -608,18 +614,10 @@ module.exports = {
   createUser,
   loginUser,
   getSystemUsers,
-  updateSystemUser,
+  updateSystemUser,updateUser,
   deleteSystemUser,
-  getAllCustomerUsers,
+  getAllCustomerUsers,deletecustomer,
   getCustomersForPaymentForm,
- getCustomerByEmail
-  // getUserById,
-  // getAllUsers,
-  // updateUser,
-  // deleteUser,
-  // forgetPassword,
-  // changePassword,
-  // logout,
-  // getAllActiveSubscribedUsers,
-  // getAllUnsubscribedUsers,
+ getCustomerByEmail,getUserById
+
 };
