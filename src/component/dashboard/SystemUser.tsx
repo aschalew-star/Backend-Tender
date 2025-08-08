@@ -9,7 +9,8 @@ import {
   UserCog,
   Calendar,
   Mail,
-  Phone,Plus,
+  Phone,
+  Plus,
   Shield,
   AlertCircle,
   X,
@@ -59,6 +60,8 @@ const SystemUsers: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
   const [modalMode, setModalMode] = useState<'edit' | 'view'>('view');
   const [selectedUser, setSelectedUser] = useState<SystemUser | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [userIdToDelete, setUserIdToDelete] = useState<number | null>(null);
   const pageSize = 15;
 
   // Fetch system users from backend
@@ -115,29 +118,37 @@ const SystemUsers: React.FC = () => {
   };
 
   const handleDelete = async (id: number) => {
-    if (window.confirm('Are you sure you want to delete this system user?')) {
-      try {
-        const token = localStorage.getItem('token') || '';
-        await axios.delete(`http://localhost:4000/api/users/systemuser/${id}`, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-          withCredentials: true,
-        });
-        setSystemUsers(systemUsers.filter((user) => user.id !== id));
-        setStats((prev) => ({
-          ...prev,
-          totalUsers: prev.totalUsers - 1,
-          totalSuperusers: systemUsers.find((u) => u.id === id)?.role === 'SUPERUSER' ? prev.totalSuperusers - 1 : prev.totalSuperusers,
-          totalAdmins: systemUsers.find((u) => u.id === id)?.role === 'ADMIN' ? prev.totalAdmins - 1 : prev.totalAdmins,
-          totalDataEntry: systemUsers.find((u) => u.id === id)?.role === 'DATAENTRY' ? prev.totalDataEntry - 1 : prev.totalDataEntry,
-        }));
-        setError(null);
-      } catch (error: any) {
-        console.error('Error deleting system user:', error);
-        setError(error.response?.data?.message || 'Failed to delete system user');
-      }
+    setUserIdToDelete(id);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!userIdToDelete) return;
+    try {
+      const token = localStorage.getItem('token') || '';
+      await axios.delete(`http://localhost:4000/api/users/deletesystem/${userIdToDelete}`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        withCredentials: true,
+      });
+      setSystemUsers(systemUsers.filter((user) => user.id !== userIdToDelete));
+      setStats((prev) => ({
+        ...prev,
+        totalUsers: prev.totalUsers - 1,
+        totalSuperusers: systemUsers.find((u) => u.id === userIdToDelete)?.role === 'SUPERUSER' ? prev.totalSuperusers - 1 : prev.totalSuperusers,
+        totalAdmins: systemUsers.find((u) => u.id === userIdToDelete)?.role === 'ADMIN' ? prev.totalAdmins - 1 : prev.totalAdmins,
+        totalDataEntry: systemUsers.find((u) => u.id === userIdToDelete)?.role === 'DATAENTRY' ? prev.totalDataEntry - 1 : prev.totalDataEntry,
+      }));
+      setError(null);
+      setShowDeleteModal(false);
+      setUserIdToDelete(null);
+    } catch (error: any) {
+      console.error('Error deleting system user:', error);
+      setError(error.response?.data?.message || 'Failed to delete system user');
+      setShowDeleteModal(false);
+      setUserIdToDelete(null);
     }
   };
 
@@ -364,6 +375,57 @@ const SystemUsers: React.FC = () => {
               </div>
             )}
           </form>
+        </div>
+      </div>
+    );
+  };
+
+  const DeleteConfirmationModal = () => {
+    if (!showDeleteModal) return null;
+
+    const user = systemUsers.find((u) => u.id === userIdToDelete);
+
+    return (
+      <div className="fixed inset-0 bg-gray-200 bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4">
+          <div className="flex items-center justify-between p-6 border-b border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-900">Confirm Deletion</h3>
+            <button
+              type="button"
+              onClick={() => {
+                setShowDeleteModal(false);
+                setUserIdToDelete(null);
+              }}
+              className="p-1 rounded-full hover:bg-gray-200 transition-all duration-200"
+            >
+              <X className="w-5 h-5 text-gray-400" />
+            </button>
+          </div>
+          <div className="p-6">
+            <p className="text-sm text-gray-600 mb-4">
+              Are you sure you want to delete the system user <span className="font-medium">{user ? `${user.firstName} ${user.lastName}` : 'this user'}</span>? This action cannot be undone.
+            </p>
+          </div>
+          <div className="flex justify-end space-x-3 p-6 border-t border-gray-200">
+            <button
+              type="button"
+              onClick={() => {
+                setShowDeleteModal(false);
+                setUserIdToDelete(null);
+              }}
+              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all duration-200"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={confirmDelete}
+              className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 shadow-md hover:shadow-lg hover:scale-105 transition-all duration-200"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Delete
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -620,6 +682,7 @@ const SystemUsers: React.FC = () => {
         </div>
 
         <UserModal />
+        <DeleteConfirmationModal />
       </div>
     </div>
   );

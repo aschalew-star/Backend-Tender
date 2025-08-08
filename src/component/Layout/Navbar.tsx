@@ -17,6 +17,7 @@ interface AuthItem {
 const navItems: NavItem[] = [
   { name: "Home", href: "/" },
   { name: "Tenders", href: "/tenders" },
+  { name: "Documents", href: "/Documents" },
   { name: "Land Lease", href: "/land-lease" },
   { name: "FAQ", href: "/faq" },
 ];
@@ -37,7 +38,7 @@ const Navbar: React.FC = () => {
       className="fixed top-0 left-0 right-0 bg-white bg-opacity-95 backdrop-blur-md shadow-lg z-50 border-b border-gray-100"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16 sm:h-18 items-center">
+        <div className="flex justify-between h-12 sm:h-18 items-center">
           {/* Logo */}
           <a href="/" className="flex items-center">
             <Logo size="md" />

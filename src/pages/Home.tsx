@@ -6,7 +6,7 @@ import Navbar from '../component/Layout/Navbar';
 
 const Home: React.FC = () => {
   return (
-    <div className="">
+    <div className="mt-16">
           <Navbar />
           {/* <Headers /> */}
       <Footer />

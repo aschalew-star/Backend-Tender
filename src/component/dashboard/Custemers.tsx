@@ -12,7 +12,8 @@ import {
   Phone,
   CheckCircle,
   XCircle,
-  CreditCard,Plus,
+  CreditCard,
+  Plus,
   AlertCircle,
   X,
 } from "lucide-react";
@@ -26,6 +27,7 @@ interface Customer {
   phone?: string;
   isSubscribed: boolean;
   endDate?: string;
+  role?: string;
   createdAt: string;
 }
 
@@ -59,6 +61,8 @@ const Customers: React.FC = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [customerIdToDelete, setCustomerIdToDelete] = useState<number | null>(null);
   const pageSize = 15;
 
   useEffect(() => {
@@ -112,30 +116,38 @@ const Customers: React.FC = () => {
   };
 
   const handleDelete = async (id: number) => {
-    if (window.confirm("Are you sure you want to delete this customer?")) {
-      try {
-        await axios.delete(`http://localhost:4000/api/users/customers/${id}`, {
-          headers: {
-            "Content-Type": "application/json",
-          },
-          withCredentials: true,
-        });
-        setCustomers(customers.filter((customer) => customer.id !== id));
-        setStats((prev) => ({
-          ...prev,
-          totalCustomers: prev.totalCustomers - 1,
-          totalSubscribed: customers.find((c) => c.id === id)?.isSubscribed
-            ? prev.totalSubscribed - 1
-            : prev.totalSubscribed,
-          totalFree: customers.find((c) => c.id === id)?.isSubscribed
-            ? prev.totalFree
-            : prev.totalFree - 1,
-        }));
-        setError(null);
-      } catch (error: any) {
-        console.error("Error deleting customer:", error);
-        setError(error.response?.data?.message || "Failed to delete customer");
-      }
+    setCustomerIdToDelete(id);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!customerIdToDelete) return;
+    try {
+      await axios.delete(`http://localhost:4000/api/users/deletecustomer/${customerIdToDelete}`, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+        withCredentials: true,
+      });
+      setCustomers(customers.filter((customer) => customer.id !== customerIdToDelete));
+      setStats((prev) => ({
+        ...prev,
+        totalCustomers: prev.totalCustomers - 1,
+        totalSubscribed: customers.find((c) => c.id === customerIdToDelete)?.isSubscribed
+          ? prev.totalSubscribed - 1
+          : prev.totalSubscribed,
+        totalFree: customers.find((c) => c.id === customerIdToDelete)?.isSubscribed
+          ? prev.totalFree
+          : prev.totalFree - 1,
+      }));
+      setError(null);
+      setShowDeleteModal(false);
+      setCustomerIdToDelete(null);
+    } catch (error: any) {
+      console.error("Error deleting customer:", error);
+      setError(error.response?.data?.message || "Failed to delete customer");
+      setShowDeleteModal(false);
+      setCustomerIdToDelete(null);
     }
   };
 
@@ -180,11 +192,11 @@ const Customers: React.FC = () => {
         isSubscribed: formData.get("isSubscribed") === "true",
         endDate: formData.get("endDate") as string || undefined,
         password: formData.get("password") as string || undefined,
+        role: "CUSTOMER",
       };
-
       try {
         const response = await axios.put<Customer>(
-          `http://localhost:4000/api/users/customers/${selectedCustomer.id}`,
+          `http://localhost:4000/api/users/updateUser/${selectedCustomer.id}`,
           customerData,
           {
             headers: {
@@ -193,6 +205,8 @@ const Customers: React.FC = () => {
             withCredentials: true,
           }
         );
+
+        console.log(response)
         setCustomers(customers.map((customer) => (customer.id === selectedCustomer.id ? response.data : customer)));
         setStats((prev) => ({
           ...prev,
@@ -372,13 +386,64 @@ const Customers: React.FC = () => {
     );
   };
 
+  const DeleteConfirmationModal = () => {
+    if (!showDeleteModal) return null;
+
+    const customer = customers.find((c) => c.id === customerIdToDelete);
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4">
+          <div className="flex items-center justify-between p-6 border-b border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-900">Confirm Deletion</h3>
+            <button
+              type="button"
+              onClick={() => {
+                setShowDeleteModal(false);
+                setCustomerIdToDelete(null);
+              }}
+              className="p-1 rounded-full hover:bg-gray-200 transition-all duration-200"
+            >
+              <X className="w-5 h-5 text-gray-400" />
+            </button>
+          </div>
+          <div className="p-6">
+            <p className="text-sm text-gray-600 mb-4">
+              Are you sure you want to delete the customer <span className="font-medium">{customer ? `${customer.firstName} ${customer.lastName}` : 'this customer'}</span>? This action cannot be undone.
+            </p>
+          </div>
+          <div className="flex justify-end space-x-3 p-6 border-t border-gray-200">
+            <button
+              type="button"
+              onClick={() => {
+                setShowDeleteModal(false);
+                setCustomerIdToDelete(null);
+              }}
+              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all duration-200"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={confirmDelete}
+              className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 shadow-md hover:shadow-lg hover:scale-105 transition-all duration-200"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 font-['Inter'] p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Breadcrumb */}
       
 
-        {/* Header */}
+        /* Header */
         <div className="mb-10 flex justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Customer Management</h1>
@@ -394,7 +459,7 @@ const Customers: React.FC = () => {
           </Link>
         </div>
 
-        {/* Stats Overview */}
+        /* Stats Overview */
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6">
             <div className="flex items-center justify-between">
@@ -442,7 +507,7 @@ const Customers: React.FC = () => {
           </div>
         </div>
 
-        {/* Search and Filters */}
+        /* Search and Filters */
         <div className="bg-white rounded-xl shadow-md border border-gray-200 mb-6">
           <div className="p-6">
             <div className="flex flex-col sm:flex-row gap-4">
@@ -475,7 +540,7 @@ const Customers: React.FC = () => {
           </div>
         </div>
 
-        {/* Error Display */}
+        /* Error Display */
         {error && (
           <div className="mb-6 p-4 bg-red-100 text-red-700 rounded-xl flex items-center">
             <AlertCircle className="w-5 h-5 mr-2" />
@@ -483,7 +548,7 @@ const Customers: React.FC = () => {
           </div>
         )}
 
-        {/* Customers Table */}
+        /* Customers Table */
         <div className="bg-white rounded-xl shadow-md border border-gray-200">
           <div className="overflow-x-auto">
             {isLoading ? (
@@ -599,7 +664,7 @@ const Customers: React.FC = () => {
             )}
           </div>
 
-          {/* Pagination */}
+          /* Pagination */
           {!isLoading && customers.length > 0 && (
             <div className="p-4 flex justify-center space-x-2">
               {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
@@ -620,6 +685,7 @@ const Customers: React.FC = () => {
         </div>
 
         <CustomerModal />
+        <DeleteConfirmationModal />
       </div>
     </div>
   );

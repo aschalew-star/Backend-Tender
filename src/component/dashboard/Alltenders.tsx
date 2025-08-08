@@ -61,9 +61,13 @@ const Alltenders: React.FC = () => {
           setTenders(validatedTenders);
           setTotalPages(response.data.meta?.totalPages || 1);
           setTotalTendersInDb(response.data.meta?.total || 0);
-          setOpenTendersInDb(validatedTenders.filter((t) => t.status === 'open').length);
-          setClosedTendersInDb(validatedTenders.filter((t) => t.status === 'closed').length);
-          setPendingTendersInDb(validatedTenders.filter((t) => t.status === 'pending').length);
+            setOpenTendersInDb(
+            validatedTenders.filter((t: Tender) => t.status === 'open').length
+            );
+            setClosedTendersInDb(
+            validatedTenders.filter((t: Tender) => t.status === 'closed').length
+            );
+            setPendingTendersInDb(validatedTenders.filter((t: Tender) => t.status === 'pending').length);
         } else {
           throw new Error(response.data.message || 'Failed to fetch tenders');
         }
@@ -93,7 +97,7 @@ const Alltenders: React.FC = () => {
     return (
       <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${config.bg} ${config.text} transition-transform duration-200 hover:scale-105`}>
         <Icon className="w-4 h-4 mr-1.5" />
-        {validStatus.charAt(0).toUpperCase() + validStatus.slice(1)}
+        {(validStatus ?? 'pending').charAt(0).toUpperCase() + (validStatus ?? 'pending').slice(1)}
       </span>
     );
   };
