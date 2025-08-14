@@ -16,6 +16,12 @@ import Tenderedit from "./pages/admin/Tenderedit.tsx"; // Importing the Tendered
 import SystemUsers from "./pages/admin/System-user.tsx"; // Importing the SystemUser component
 import Createpayment from "./pages/admin/Createpayment.tsx"; // Importing the Createpayment component
 import Home from "./pages/Home.tsx"; // Importing the Home component
+import AllTender from "./pages/AllTender.tsx";
+import WrappedTenderDocPage from "./pages/TenderDoc.tsx";
+import TenderDetailPage  from "./pages/TenderDetailpage"
+import StartPage from "./pages/Startpage"
+import NotificationSettingsPage from "./pages/NotificationSettingPage.tsx";
+import Billing from "./pages/Billing.tsx";
 
 
 
@@ -25,6 +31,12 @@ function App() {
       <Routes>
 
         <Route path="/" element={<Home />} />
+        <Route path="/Tenders" element={<AllTender />} />
+        <Route path="/Documents" element={<WrappedTenderDocPage />} />
+        <Route path="/TenderDetailPage/:id" element={<TenderDetailPage />} />
+        <Route path="/home" element={<StartPage/>} />
+        <Route path="/NotificationSettings" element={<NotificationSettingsPage/>} />
+        <Route path="/Billing" element={<Billing />} />
            
          {/* Admin/dashboard  pages */}
         <Route path="/admin/tender-create" element={<TenderCreate />} />

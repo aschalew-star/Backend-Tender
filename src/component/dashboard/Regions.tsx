@@ -46,7 +46,18 @@ class RegionErrorBoundary extends Component<{ children: ReactNode }, { hasError:
 }
 
 // Custom Modal for adding/editing/viewing regions
-const RegionModal = ({ show, mode, region, onSave, onClose, onInputChange, inputValue, error }) => {
+interface RegionModalProps {
+  show: boolean;
+  mode: 'add' | 'edit' | 'view';
+  region: Region | null;
+  onSave: () => void;
+  onClose: () => void;
+  onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  inputValue: string;
+  error: string | null;
+}
+
+const RegionModal: React.FC<RegionModalProps> = ({ show, mode, region, onSave, onClose, onInputChange, inputValue, error }) => {
   if (!show) return null;
 
   return (
@@ -120,7 +131,14 @@ const RegionModal = ({ show, mode, region, onSave, onClose, onInputChange, input
 };
 
 // Custom Modal for delete confirmation
-const DeleteConfirmationModal = ({ show, onConfirm, onCancel, regionName }) => {
+interface DeleteConfirmationModalProps {
+  show: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+  regionName: string;
+}
+
+const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({ show, onConfirm, onCancel, regionName }) => {
   if (!show) return null;
 
   return (
