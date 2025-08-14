@@ -8,6 +8,7 @@ const subcatagory = require('./routes/sucatagoryroute.js');
 const region = require('./routes/Region.js');
 const Bank = require('./routes/Bank.js');
 const payment = require('./routes/payment.js');
+const notification=require('./routes/Notification.js')
 const { runSubscriptionCheck } = require("./utili/Scheduler.js")
 const path = require('path');
 
@@ -43,6 +44,7 @@ app.use('/api/tender', tender);
 app.use('/api/subcatagory', subcatagory);
 app.use('/api/region', region);
 app.use('/api/Bank', Bank);
+app.use('/api/notification', notification);
 app.use('/api/payment', payment);
 
 // Global error handler

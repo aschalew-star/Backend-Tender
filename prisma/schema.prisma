@@ -201,6 +201,7 @@ model Notification {
   type       String
   tenderId   Int?
   tender     Tender?     @relation(fields: [tenderId], references: [id])
+  createdat  DateTime    @default(now())
 }
 
 model ActivityLog {
