@@ -18,6 +18,7 @@ import {
   Zap,
   Crown,
 } from "lucide-react"
+import Navbar from "../component/Layout/Navbar"
 
 // Main App component
 export default function Billing() {
@@ -466,10 +467,10 @@ export default function Billing() {
                   <h2 className="text-2xl font-bold text-slate-900">Payment Methods</h2>
                   <p className="text-slate-600">Manage your saved payment methods</p>
                 </div>
-                <button className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:shadow-lg transition-all">
+                {/* <button className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:shadow-lg transition-all">
                   <Plus className="w-4 h-4" />
                   Add Method
-                </button>
+                </button> */}
               </div>
               <div className="space-y-4">
                 {paymentMethods.map((method) => (

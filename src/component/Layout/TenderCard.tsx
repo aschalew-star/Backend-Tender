@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
-import { Calendar, MapPin, Tag, Lock, Star, FileText, Eye, Download } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import type { Tender } from '../type/Tender';
+"use client";
+
+import React, { useState } from "react";
+import { Calendar, MapPin, Tag, Lock, Star, FileText, Eye } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import type { Tender } from "../type/Tender";
 
 interface TenderCardProps {
   tender: Tender;
@@ -10,19 +12,21 @@ interface TenderCardProps {
   onViewDetails: (tender: Tender) => void;
 }
 
-export function TenderCard({ tender, isSubscribed, className = '', onViewDetails }: TenderCardProps) {
+export function TenderCard({ tender, isSubscribed, className = "", onViewDetails }: TenderCardProps) {
   const [isFavorited, setIsFavorited] = useState(false);
-  const canViewDates = isSubscribed || tender.type === 'FREE';
+  const canViewDates = isSubscribed || tender.type === "FREE";
   const isExpired = new Date(tender.biddingClosed) < new Date();
-  const daysLeft = Math.ceil((new Date(tender.biddingClosed).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+  const daysLeft = Math.ceil(
+    (new Date(tender.biddingClosed).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
+  );
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
@@ -33,8 +37,8 @@ export function TenderCard({ tender, isSubscribed, className = '', onViewDetails
 
   const cardVariants = {
     initial: { opacity: 0, y: 20 },
-    animate: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } },
-    hover: { scale: 1.03, transition: { duration: 0.3 } },
+    animate: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } },
+    hover: { scale: 1.02, transition: { duration: 0.3 } },
   };
 
   return (
@@ -43,106 +47,105 @@ export function TenderCard({ tender, isSubscribed, className = '', onViewDetails
       initial="initial"
       animate="animate"
       whileHover="hover"
-      className={`relative bg-white/90 backdrop-blur-lg rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100/50 ${className}`}
+      className={`relative bg-white rounded-3xl shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden border border-indigo-100/30 ${className}`}
       role="article"
       aria-labelledby={`tender-title-${tender.id}`}
     >
       {/* Gradient Hover Overlay */}
       <motion.div
-        className="absolute inset-0 bg-gradient-to-br from-indigo-50/30 via-purple-50/30 to-pink-50/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+        className="absolute inset-0 bg-gradient-to-br from-indigo-50/20 via-purple-50/20 to-pink-50/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
         aria-hidden="true"
       />
 
       {/* Header */}
-      <div className="relative p-6 border-b border-gray-100/30">
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center gap-3 flex-wrap">
+      <div className="p-6 border-b border-indigo-100/20">
+        <div className="flex items-start justify-between gap-4 mb-4">
+          <div className="flex flex-wrap items-center gap-2">
             <motion.span
-              whileHover={{ scale: 1.1 }}
-              className={`px-4 py-1.5 rounded-full text-xs font-semibold shadow-md ${
-                tender.type === 'FREE'
-                  ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white'
-                  : 'bg-gradient-to-r from-amber-500 to-orange-500 text-white'
+              whileHover={{ scale: 1.05 }}
+              className={`px-3 py-1 rounded-full text-xs font-medium shadow-sm ${
+                tender.type === "FREE"
+                  ? "bg-emerald-100 text-emerald-700"
+                  : "bg-amber-100 text-amber-700"
               }`}
+              role="status"
             >
               {tender.type}
             </motion.span>
             {!isExpired && daysLeft <= 7 && (
               <motion.span
-                initial={{ scale: 0.8 }}
-                animate={{ scale: 1, transition: { duration: 0.5, repeat: Infinity, repeatType: 'reverse' } }}
-                className="px-4 py-1.5 bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-full text-xs font-semibold shadow-md"
+                initial={{ scale: 0.9 }}
+                animate={{ scale: 1, transition: { duration: 0.5, repeat: Infinity, repeatType: "reverse" } }}
+                className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium shadow-sm"
+                role="status"
               >
-                {daysLeft} {daysLeft === 1 ? 'day' : 'days'} left
+                {daysLeft} {daysLeft === 1 ? "day" : "days"} left
               </motion.span>
             )}
             {isExpired && (
-              <span className="px-4 py-1.5 bg-gray-500/80 text-white rounded-full text-xs font-semibold shadow-md">
+              <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium shadow-sm">
                 Expired
               </span>
             )}
           </div>
           <div className="flex items-center gap-2">
-            {tender.type === 'PAID' && !isSubscribed && (
+            {tender.type === "PAID" && !isSubscribed && (
               <motion.div
-                whileHover={{ scale: 1.1 }}
-                className="p-2 bg-amber-100/80 rounded-full"
+                whileHover={{ scale: 1.05 }}
+                className="p-1.5 bg-amber-50 rounded-full"
                 title="Premium content locked"
+                aria-label="Premium content locked"
               >
-                <Lock className="w-5 h-5 text-amber-600" />
+                <Lock className="w-4 h-4 text-amber-600" />
               </motion.div>
             )}
             <motion.button
-              whileHover={{ scale: 1.2 }}
+              whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               onClick={handleFavoriteToggle}
-              className="p-2 rounded-full hover:bg-gray-100/50"
-              aria-label={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
+              className="p-1.5 rounded-full hover:bg-indigo-50/50 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+              aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
             >
               <Star
-                className={`w-5 h-5 ${isFavorited ? 'text-yellow-400 fill-yellow-400' : 'text-gray-400'}`}
+                className={`w-4 h-4 ${isFavorited ? "text-yellow-400 fill-yellow-400" : "text-gray-400"}`}
                 aria-hidden="true"
               />
             </motion.button>
           </div>
         </div>
-{/* 
         <h3
           id={`tender-title-${tender.id}`}
-          className="text-xl font-bold text-gray-900 group-hover:text-indigo-600 transition-colors line-clamp-2 leading-tight"
+          className="text-2xl font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors line-clamp-2 leading-tight"
         >
           {tender.title}
-        </h3> */}
-
+        </h3>
         {tender.description && (
-          <p className="text-gray-600  mt-2 text-xl hover:text-red-500 line-clamp-3 leading-relaxed">
-            {/* {tender.description} */}
-          {tender.title}
-
+          <p className="text-gray-600 mt-2 text-sm line-clamp-3 leading-relaxed">
+            {tender.description}
           </p>
         )}
       </div>
 
       {/* Content */}
-      <div className=" space-y-5">
+      <div className="p-6 space-y-4">
         {/* Category and Region */}
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap gap-2">
           <motion.div
-            whileHover={{ scale: 1.05 }}
-            className="flex items-center gap-2 bg-indigo-50/80 px-3 rounded-lg"
+            whileHover={{ scale: 1.03 }}
+            className="flex items-center gap-1.5 bg-indigo-50 px-2.5 py-1 rounded-lg"
           >
-            <Tag className="w-4 h-4 text-indigo-500" />
-            <span className="text-sm font-medium text-indigo-800">
+            <Tag className="w-3.5 h-3.5 text-indigo-500" />
+            <span className="text-xs font-medium text-indigo-700">
               {tender.category.name} • {tender.subcategory.name}
             </span>
           </motion.div>
           {tender.region && (
             <motion.div
-              whileHover={{ scale: 1.05 }}
-              className="flex items-center gap-2 bg-emerald-50/80 px-3  rounded-lg"
+              whileHover={{ scale: 1.03 }}
+              className="flex items-center gap-1.5 bg-emerald-50 px-2.5 py-1 rounded-lg"
             >
-              <MapPin className="w-4 h-4 text-emerald-500" />
-              <span className="text-sm font-medium text-emerald-800">{tender.region.name}</span>
+              <MapPin className="w-3.5 h-3.5 text-emerald-500" />
+              <span className="text-xs font-medium text-emerald-700">{tender.region.name}</span>
             </motion.div>
           )}
         </div>
@@ -152,49 +155,43 @@ export function TenderCard({ tender, isSubscribed, className = '', onViewDetails
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <motion.div
               whileHover={{ scale: 1.02 }}
-              className="bg-gradient-to-br from-indigo-50 to-blue-50 p-4 rounded-lg border border-indigo-100/50"
+              className="bg-indigo-50/50 p-3 rounded-lg border border-indigo-100/20"
             >
-              <div className="flex items-center gap-2 mb-1">
-                <Calendar className="w-4 h-4 text-indigo-500" />
-                <span className="text-xs font-normal text-indigo-600 uppercase">Opening</span>
+              <div className="flex items-center gap-1.5 mb-1">
+                <Calendar className="w-3.5 h-3.5 text-indigo-500" />
+                <span className="text-xs font-medium text-indigo-600 uppercase">Opening</span>
               </div>
-              <div className="text-base font-light text-indigo-800">
-                {formatDate(tender.biddingOpen)}
-              </div>
+              <div className="text-sm font-medium text-indigo-800">{formatDate(tender.biddingOpen)}</div>
             </motion.div>
             <motion.div
               whileHover={{ scale: 1.02 }}
-              className="bg-gradient-to-br from-pink-50 to-red-50 p-4 rounded-lg border border-red-100/50"
+              className="bg-red-50/50 p-3 rounded-lg border border-red-100/20"
             >
-              <div className="flex items-center gap-2 mb-1">
-                <Calendar className="w-4 h-4 text-red-500" />
-                <span className="text-xs font-normal text-red-600 uppercase">Closing</span>
+              <div className="flex items-center gap-1.5 mb-1">
+                <Calendar className="w-3.5 h-3.5 text-red-500" />
+                <span className="text-xs font-medium text-red-600 uppercase">Closing</span>
               </div>
-              <div className="text-base font-light text-red-800">
-                {formatDate(tender.biddingClosed)}
-              </div>
+              <div className="text-sm font-medium text-red-800">{formatDate(tender.biddingClosed)}</div>
             </motion.div>
           </div>
         ) : (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-gradient-to-br from-amber-50 to-yellow-50 border border-amber-100 p-5 rounded-lg text-center"
+            className="bg-amber-50/50 border border-amber-100/20 p-4 rounded-lg text-center"
           >
             <motion.div
-              whileHover={{ scale: 1.1 }}
-              className="p-3 bg-amber-100/80 rounded-full inline-block mb-3"
-            >
-              <Lock className="w-6 h-6 text-amber-600" />
-            </motion.div>
-            <h4 className="text-amber-800 text-base font-semibold mb-2">Premium Content</h4>
-            <p className="text-amber-700 text-sm mb-3">
-              Subscribe to unlock bidding dates and full details
-            </p>
-            <motion.button
               whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="px-5 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg text-sm font-semibold shadow-md hover:shadow-lg transition-all"
+              className="p-2 bg-amber-100/50 rounded-full inline-block mb-2"
+            >
+              <Lock className="w-5 h-5 text-amber-600" />
+            </motion.div>
+            <h4 className="text-amber-800 text-sm font-semibold mb-1">Premium Content</h4>
+            <p className="text-amber-700 text-xs mb-3">Subscribe to unlock bidding dates and full details</p>
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              className="px-4 py-2 bg-amber-500 text-white rounded-lg text-xs font-semibold shadow-sm hover:shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-amber-300"
             >
               Subscribe Now
             </motion.button>
@@ -206,12 +203,12 @@ export function TenderCard({ tender, isSubscribed, className = '', onViewDetails
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-gray-50/80 rounded-lg p-4"
+            className="bg-gray-50/50 rounded-lg p-3 border border-gray-100/20"
           >
-            <div className="flex items-center gap-2 mb-2">
-              <FileText className="w-4 h-4 text-gray-600" />
-              <span className="text-sm font-semibold text-gray-800">Documents</span>
-              <span className="bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-full text-xs font-medium">
+            <div className="flex items-center gap-1.5 mb-2">
+              <FileText className="w-3.5 h-3.5 text-gray-600" />
+              <span className="text-xs font-semibold text-gray-700">Documents</span>
+              <span className="bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded-full text-xs font-medium">
                 {tender.tenderDocs.length}
               </span>
             </div>
@@ -219,14 +216,14 @@ export function TenderCard({ tender, isSubscribed, className = '', onViewDetails
               {tender.tenderDocs.slice(0, 3).map((doc) => (
                 <motion.span
                   key={doc.id}
-                  whileHover={{ scale: 1.05 }}
-                  className="bg-white px-3 py-1 rounded-lg text-xs text-gray-700 border border-gray-200 shadow-sm"
+                  whileHover={{ scale: 1.03 }}
+                  className="bg-white px-2.5 py-1 rounded-lg text-xs text-gray-600 border border-gray-100 shadow-sm"
                 >
                   {doc.name}
                 </motion.span>
               ))}
               {tender.tenderDocs.length > 3 && (
-                <span className="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-lg text-xs font-medium">
+                <span className="bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-lg text-xs font-medium">
                   +{tender.tenderDocs.length - 3} more
                 </span>
               )}
@@ -241,7 +238,7 @@ export function TenderCard({ tender, isSubscribed, className = '', onViewDetails
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
           onClick={() => onViewDetails(tender)}
-          className="w-full py-3 bg-gradient-to-r from-blue-600 to-blue-400 text-white rounded-lg font-semibold shadow-md hover:shadow-lg flex items-center justify-center gap-2 transition-all"
+          className="w-full py-2.5 bg-indigo-600 text-white rounded-lg text-sm font-semibold shadow-sm hover:shadow-md flex items-center justify-center gap-1.5 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-300"
           aria-label={`View details for ${tender.title}`}
         >
           <Eye className="w-4 h-4" />

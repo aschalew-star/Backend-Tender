@@ -22,6 +22,9 @@ import TenderDetailPage  from "./pages/TenderDetailpage"
 import StartPage from "./pages/Startpage"
 import NotificationSettingsPage from "./pages/NotificationSettingPage.tsx";
 import Billing from "./pages/Billing.tsx";
+import NotificationPage from "./pages/NotificationPage.tsx";
+import { CheckoutPage } from "./pages/Checkout.tsx";
+ import FAQ from "./pages/FAQ.tsx";
 
 
 
@@ -32,11 +35,14 @@ function App() {
 
         <Route path="/" element={<Home />} />
         <Route path="/Tenders" element={<AllTender />} />
+        <Route path="/FAQ" element={<FAQ />} />
+        <Route path="/checkout/:documentId" element={<CheckoutPage />} />
         <Route path="/Documents" element={<WrappedTenderDocPage />} />
         <Route path="/TenderDetailPage/:id" element={<TenderDetailPage />} />
         <Route path="/home" element={<StartPage/>} />
         <Route path="/NotificationSettings" element={<NotificationSettingsPage/>} />
         <Route path="/Billing" element={<Billing />} />
+        <Route path="/Notifications" element={<NotificationPage/>} />
            
          {/* Admin/dashboard  pages */}
         <Route path="/admin/tender-create" element={<TenderCreate />} />

@@ -5,7 +5,7 @@ import { Search, FileText, Building2 } from "lucide-react";
 import DocumentCard from "../component/DocumentCard";
 import BiddingDocCard from "../component/BiddingCard";
 import Navbar from "../component/Layout/Navbar";
-import  TenderDocPage  from "./TenderDetailpage";
+import TenderDocPage from "./TenderDetailpage";
 
 // --- START: Recreated shadcn/ui components ---
 const Button = ({ children, className = '', variant = 'default', size = 'default', ...props }) => {
@@ -86,6 +86,17 @@ const CardContent = ({ children, className = '', ...props }) => (
   <div className={`p-6 pt-0 ${className}`} {...props}>
     {children}
   </div>
+);
+
+const Select = ({ value, onChange, children, className = '', ...props }) => (
+  <select
+    value={value}
+    onChange={onChange}
+    className={`flex h-10 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
+    {...props}
+  >
+    {children}
+  </select>
 );
 // --- END: Recreated shadcn/ui components ---
 
@@ -222,6 +233,102 @@ const mockTenderDocs: TenderDoc[] = [
     createdAt: "2024-01-25T00:00:00Z",
     tenderId: 3,
     customers: 80,
+  },  {
+    id: 1,
+    name: "highway_construction_tender.pdf",
+    title: "Highway Construction Project - Phase 1",
+    file: "highway-construction-tender.pdf",
+    price: undefined,
+    type: "FREE",
+    createdAt: "2024-01-15T00:00:00Z",
+    tenderId: 1,
+    customers: 150,
+  },
+  {
+    id: 2,
+    name: "enterprise_software_tender.pdf",
+    title: "Enterprise Software Solutions",
+    file: "enterprise-software-tender.pdf",
+    price: 25.0,
+    type: "PAID",
+    createdAt: "2024-01-20T00:00:00Z",
+    tenderId: 2,
+    customers: 120,
+  },
+  {
+    id: 3,
+    name: "medical_equipment_tender.pdf",
+    title: "Hospital Equipment Procurement",
+    file: "medical-equipment-tender.pdf",
+    price: undefined,
+    type: "FREE",
+    createdAt: "2024-01-25T00:00:00Z",
+    tenderId: 3,
+    customers: 80,
+  },  {
+    id: 1,
+    name: "highway_construction_tender.pdf",
+    title: "Highway Construction Project - Phase 1",
+    file: "highway-construction-tender.pdf",
+    price: undefined,
+    type: "FREE",
+    createdAt: "2024-01-15T00:00:00Z",
+    tenderId: 1,
+    customers: 150,
+  },
+  {
+    id: 2,
+    name: "enterprise_software_tender.pdf",
+    title: "Enterprise Software Solutions",
+    file: "enterprise-software-tender.pdf",
+    price: 25.0,
+    type: "PAID",
+    createdAt: "2024-01-20T00:00:00Z",
+    tenderId: 2,
+    customers: 120,
+  },
+  {
+    id: 3,
+    name: "medical_equipment_tender.pdf",
+    title: "Hospital Equipment Procurement",
+    file: "medical-equipment-tender.pdf",
+    price: undefined,
+    type: "FREE",
+    createdAt: "2024-01-25T00:00:00Z",
+    tenderId: 3,
+    customers: 80,
+  },  {
+    id: 1,
+    name: "highway_construction_tender.pdf",
+    title: "Highway Construction Project - Phase 1",
+    file: "highway-construction-tender.pdf",
+    price: undefined,
+    type: "FREE",
+    createdAt: "2024-01-15T00:00:00Z",
+    tenderId: 1,
+    customers: 150,
+  },
+  {
+    id: 2,
+    name: "enterprise_software_tender.pdf",
+    title: "Enterprise Software Solutions",
+    file: "enterprise-software-tender.pdf",
+    price: 25.0,
+    type: "PAID",
+    createdAt: "2024-01-20T00:00:00Z",
+    tenderId: 2,
+    customers: 120,
+  },
+  {
+    id: 3,
+    name: "medical_equipment_tender.pdf",
+    title: "Hospital Equipment Procurement",
+    file: "medical-equipment-tender.pdf",
+    price: undefined,
+    type: "FREE",
+    createdAt: "2024-01-25T00:00:00Z",
+    tenderId: 3,
+    customers: 80,
   },
 ];
 
@@ -285,28 +392,80 @@ const App = () => {
   const [selectedTenderId, setSelectedTenderId] = useState<number | null>(null);
   const [tenderSearch, setTenderSearch] = useState("");
   const [biddingSearch, setBiddingSearch] = useState("");
+  const [tenderPage, setTenderPage] = useState(1);
+  const [biddingPage, setBiddingPage] = useState(1);
+  const [tenderFilter, setTenderFilter] = useState<"ALL" | "FREE" | "PAID">("ALL");
+  const [biddingFilter, setBiddingFilter] = useState<"ALL" | "FREE" | "PAID">("ALL");
+  const itemsPerPage = 6;
 
   const filteredTenderDocs = useMemo(() => {
     return mockTenderDocs.filter(
       (doc) =>
-        doc.name.toLowerCase().includes(tenderSearch.toLowerCase()) ||
-        doc.title.toLowerCase().includes(tenderSearch.toLowerCase())
+        (doc.name.toLowerCase().includes(tenderSearch.toLowerCase()) ||
+          doc.title.toLowerCase().includes(tenderSearch.toLowerCase())) &&
+        (tenderFilter === "ALL" || doc.type === tenderFilter)
     );
-  }, [tenderSearch]);
+  }, [tenderSearch, tenderFilter]);
 
   const filteredBiddingDocs = useMemo(() => {
     return mockBiddingDocs.filter(
       (doc) =>
-        doc.title.toLowerCase().includes(biddingSearch.toLowerCase()) ||
-        (doc.description?.toLowerCase().includes(biddingSearch.toLowerCase()) ?? false) ||
-        doc.company.toLowerCase().includes(biddingSearch.toLowerCase())
+        (doc.title.toLowerCase().includes(biddingSearch.toLowerCase()) ||
+          (doc.description?.toLowerCase().includes(biddingSearch.toLowerCase()) ?? false) ||
+          doc.company.toLowerCase().includes(biddingSearch.toLowerCase())) &&
+        (biddingFilter === "ALL" || doc.type === biddingFilter)
     );
-  }, [biddingSearch]);
+  }, [biddingSearch, biddingFilter]);
+
+  // Pagination calculations
+  const totalTenderPages = Math.ceil(filteredTenderDocs.length / itemsPerPage);
+  const totalBiddingPages = Math.ceil(filteredBiddingDocs.length / itemsPerPage);
+
+  const paginatedTenderDocs = useMemo(() => {
+    const start = (tenderPage - 1) * itemsPerPage;
+    return filteredTenderDocs.slice(start, start + itemsPerPage);
+  }, [filteredTenderDocs, tenderPage]);
+
+  const paginatedBiddingDocs = useMemo(() => {
+    const start = (biddingPage - 1) * itemsPerPage;
+    return filteredBiddingDocs.slice(start, start + itemsPerPage);
+  }, [filteredBiddingDocs, biddingPage]);
 
   const handleViewTender = (tenderId: number) => {
     setSelectedTenderId(tenderId);
     setActiveTab("tenderPage");
   };
+
+  const renderPagination = (currentPage: number, totalPages: number, setPage: (page: number) => void) => (
+    <div className="flex justify-center items-center gap-2 mt-6">
+      <Button
+        variant="outline"
+        size="sm"
+        disabled={currentPage === 1}
+        onClick={() => setPage(currentPage - 1)}
+      >
+        Previous
+      </Button>
+      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+        <Button
+          key={page}
+          variant={currentPage === page ? "default" : "outline"}
+          size="sm"
+          onClick={() => setPage(page)}
+        >
+          {page}
+        </Button>
+      ))}
+      <Button
+        variant="outline"
+        size="sm"
+        disabled={currentPage === totalPages}
+        onClick={() => setPage(currentPage + 1)}
+      >
+        Next
+      </Button>
+    </div>
+  );
 
   if (activeTab === "tenderPage" && selectedTenderId !== null) {
     const tender = mockTenders.find((t) => t.id === selectedTenderId);
@@ -368,9 +527,9 @@ const App = () => {
           <div className="p-8">
             {activeTab === "tender" && (
               <div className="animate-fade-in">
-                {/* Search Bar */}
-                <div className="mb-8">
-                  <div className="relative max-w-md mx-auto">
+                {/* Search Bar and Filter */}
+                <div className="mb-8 flex flex-col sm:flex-row gap-4 items-center justify-center">
+                  <div className="relative max-w-md w-full">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                     <Input
                       placeholder="Search tender documents..."
@@ -379,11 +538,20 @@ const App = () => {
                       className="pl-10 py-3 border-gray-200 focus:border-cyan-500 focus:ring-cyan-500"
                     />
                   </div>
+                  <Select
+                    value={tenderFilter}
+                    onChange={(e) => setTenderFilter(e.target.value as "ALL" | "FREE" | "PAID")}
+                    className="max-w-[150px]"
+                  >
+                    <option value="ALL">All</option>
+                    <option value="FREE">Free</option>
+                    <option value="PAID">Paid</option>
+                  </Select>
                 </div>
 
                 {/* Documents Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredTenderDocs.map((doc) => (
+                  {paginatedTenderDocs.map((doc) => (
                     <div key={doc.id} className="cursor-pointer" onClick={() => handleViewTender(doc.tenderId)}>
                       <DocumentCard
                         document={doc}
@@ -396,21 +564,24 @@ const App = () => {
                   ))}
                 </div>
 
-                {filteredTenderDocs.length === 0 && (
+                {paginatedTenderDocs.length === 0 && (
                   <div className="text-center py-12">
                     <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                     <h3 className="font-bold text-xl text-gray-500 mb-2">No documents found</h3>
-                    <p className="text-gray-400">Try adjusting your search terms</p>
+                    <p className="text-gray-400">Try adjusting your search terms or filter</p>
                   </div>
                 )}
+
+                {/* Pagination */}
+                {totalTenderPages > 1 && renderPagination(tenderPage, totalTenderPages, setTenderPage)}
               </div>
             )}
 
             {activeTab === "bidding" && (
               <div className="animate-fade-in">
-                {/* Search Bar */}
-                <div className="mb-8">
-                  <div className="relative max-w-md mx-auto">
+                {/* Search Bar and Filter */}
+                <div className="mb-8 flex flex-col sm:flex-row gap-4 items-center justify-center">
+                  <div className="relative max-w-md w-full">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                     <Input
                       placeholder="Search proposals by company or description..."
@@ -419,22 +590,34 @@ const App = () => {
                       className="pl-10 py-3 border-gray-200 focus:border-orange-500 focus:ring-orange-500"
                     />
                   </div>
+                  <Select
+                    value={biddingFilter}
+                    onChange={(e) => setBiddingFilter(e.target.value as "ALL" | "FREE" | "PAID")}
+                    className="max-w-[150px]"
+                  >
+                    <option value="ALL">All</option>
+                    <option value="FREE">Free</option>
+                    <option value="PAID">Paid</option>
+                  </Select>
                 </div>
 
                 {/* Documents Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredBiddingDocs.map((doc) => (
+                  {paginatedBiddingDocs.map((doc) => (
                     <BiddingDocCard key={doc.id} doc={doc} />
                   ))}
                 </div>
 
-                {filteredBiddingDocs.length === 0 && (
+                {paginatedBiddingDocs.length === 0 && (
                   <div className="text-center py-12">
                     <Building2 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                     <h3 className="font-bold text-xl text-gray-500 mb-2">No proposals found</h3>
-                    <p className="text-gray-400">Try adjusting your search terms</p>
+                    <p className="text-gray-400">Try adjusting your search terms or filter</p>
                   </div>
                 )}
+
+                {/* Pagination */}
+                {totalBiddingPages > 1 && renderPagination(biddingPage, totalBiddingPages, setBiddingPage)}
               </div>
             )}
           </div>
