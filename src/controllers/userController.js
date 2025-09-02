@@ -526,6 +526,52 @@ const deletecustomer = asynerror(async (req, res, next) => {
   
 });
 
+const getMe = asynerror(async (req, res, next) => {
+  const { id, type } = req.user;
+
+  if (!id || !type) {
+    return next(new handleError('User authentication failed', 401));
+  }
+
+  let user;
+  if (type === 'systemuser') {
+    user = await prisma.systemUser.findUnique({ where: { id } });
+  } else {
+    user = await prisma.customer.findUnique({ where: { id } });
+  }
+
+  if (!user) {
+    return next(new handleError('User not found', 404));
+  }
+
+  return res.json({
+    id: user.id,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    email: user.email,
+    role: user.role,
+    type,
+  });
+});
+
+const logoutUser = async (req, res, next) => {
+  try {
+    // Clear the 'token' cookie by setting an expired date
+    res.clearCookie('token', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'Strict',
+    });
+
+    // Return success response
+    res.status(200).json({ message: 'Logged out successfully' });
+  } catch (error) {
+    // Pass any unexpected errors to the error-handling middleware
+    next(new handleError('Failed to log out', 500));
+  }
+};
+
+
 
 // const forgetPassword = asynerror(async (req, res, next) => {
 //   const { email } = req.body;
@@ -576,9 +622,6 @@ const deletecustomer = asynerror(async (req, res, next) => {
 //   return res.json({ message: 'Password changed successfully' });
 // });
 
-// const logout = asynerror(async (req, res, next) => {
-//   res.clearCookie('token').json({ message: 'Logged out successfully' });
-// });
 
 // const getAllActiveSubscribedUsers = asynerror(async (req, res, next) => {
 //   const activeUsers = await prisma.customer.findMany({
@@ -610,6 +653,8 @@ const deletecustomer = asynerror(async (req, res, next) => {
 //   });
 // });
 
+
+
 module.exports = {
   createUser,
   loginUser,
@@ -619,5 +664,5 @@ module.exports = {
   getAllCustomerUsers,deletecustomer,
   getCustomersForPaymentForm,
  getCustomerByEmail,getUserById
-
+,getMe,logoutUser
 };

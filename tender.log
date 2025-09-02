@@ -137,3 +137,7 @@
 {"level":"error","message":"Failed to delete file 1754658243157-163060889-Document1.pdf: The \"cb\" argument must be of type function. Received undefined","timestamp":"2025-08-08T13:29:11.262Z"}
 {"level":"info","message":"Deleted 11 existing tender documents for tender ID: 17","timestamp":"2025-08-08T13:29:11.267Z"}
 {"level":"info","message":"Tender updated successfully: ID 17","timestamp":"2025-08-08T13:29:11.278Z"}
+{"level":"info","message":"Starting tender update for ID: 4","timestamp":"2025-08-14T16:28:28.498Z"}
+{"level":"info","message":"Received 1 tender files and 0 bidding files","timestamp":"2025-08-14T16:28:28.501Z"}
+{"level":"info","message":"Deleted 0 existing tender documents for tender ID: 4","timestamp":"2025-08-14T16:28:30.561Z"}
+{"level":"info","message":"Tender updated successfully: ID 4","timestamp":"2025-08-14T16:28:31.108Z"}
