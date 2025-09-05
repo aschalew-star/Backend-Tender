@@ -13,6 +13,8 @@ import {
   ChevronRight,
   Menu,
   X,
+  Megaphone, // Added for Advertisement
+  Tag,       // Added for Category
 } from 'lucide-react';
 
 interface SubItem {
@@ -52,7 +54,7 @@ const data = {
       title: "Tenders",
       icon: FileText,
       items: [
-         {
+        {
           title: "All Tenders",
           url: "/admin/Tenders",
         },
@@ -60,8 +62,30 @@ const data = {
           title: "Create Tender",
           url: "/admin/tender-create",
         },
-      
       ],
+    },
+    {
+      title: "Categories",
+      icon: Tag,
+      items: [
+        {
+          title: "All Categories",
+          url: "/admin/Categories",
+        },
+        {
+          title: "Subcategories",
+          url: "/admin/Subcategories",
+        },
+        {
+          title: "Create Category",
+          url: "/admin/category-create",
+        },
+      ],
+    },
+    {
+      title: "Advertisements",
+      url: "/admin/Advertisement",
+      icon: Megaphone,
     },
     {
       title: "Payments",
@@ -93,7 +117,7 @@ const data = {
 
 export function AppSidebar() {
   const [isOpen, setIsOpen] = useState(false);
-  const [expandedItem, setExpandedItem] = useState<string | null>(null); // Only one item expanded at a time
+  const [expandedItem, setExpandedItem] = useState<string | null>(null);
   const [currentPath, setCurrentPath] = useState(window.location.pathname);
 
   const toggleSidebar = () => {
@@ -101,7 +125,7 @@ export function AppSidebar() {
   };
 
   const toggleExpanded = (title: string) => {
-    setExpandedItem((prev) => (prev === title ? null : title)); // Collapse if clicked again, otherwise set new item
+    setExpandedItem((prev) => (prev === title ? null : title));
   };
 
   const SidebarItem: React.FC<{ item: NavItem }> = ({ item }) => {
@@ -174,7 +198,7 @@ export function AppSidebar() {
   };
 
   return (
-    < >
+    <>
       {/* Mobile Overlay */}
       {isOpen && (
         <div
@@ -203,12 +227,9 @@ export function AppSidebar() {
       >
         {/* Header */}
         <div className="p-6 border-b border-gray-200">
-          <div className="flex flex-col  items-center space-x-3">
-            {/* <div className="bg-indigo-600 p-2.5 rounded-xl shadow-sm">
-              <BarChart3 className="w-6 h-6 text-white" />
-            </div> */}
-              <h1 className="font-bold text-2xl text-gray-800 tracking-tight mb-2">Tender Dashboard</h1>
-              <p className="text-xs text-gray-500">Management System</p>
+          <div className="flex flex-col items-center space-x-3">
+            <h1 className="font-bold text-2xl text-gray-800 tracking-tight mb-2">Tender Dashboard</h1>
+            <p className="text-xs text-gray-500">Management System</p>
           </div>
         </div>
 

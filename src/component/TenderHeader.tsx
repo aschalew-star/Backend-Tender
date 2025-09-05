@@ -32,7 +32,10 @@ export const TenderHeader: React.FC<TenderHeaderProps> = ({
             <div className="flex items-center justify-between">
               <h1 className="text-4xl font-bold text-gray-900 leading-tight">{tender.title}</h1>
               <div className="flex items-center gap-3">
-                <Badge variant={tender.type === 'PAID' ? 'default' : 'secondary'} className="text-sm px-3 py-1">
+                <Badge
+                  variant={tender.type === 'PAID' ? 'default' : 'secondary'}
+                  className="text-sm px-3 py-1"
+                >
                   {tender.type}
                 </Badge>
                 <button
@@ -48,6 +51,7 @@ export const TenderHeader: React.FC<TenderHeaderProps> = ({
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Bidding Opens */}
               <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl border border-blue-100 transform transition-all duration-200 hover:scale-105">
                 <div className="flex items-center gap-2 mb-2">
                   <Calendar className="w-5 h-5 text-blue-600" />
@@ -56,6 +60,7 @@ export const TenderHeader: React.FC<TenderHeaderProps> = ({
                 <p className="text-blue-800 font-medium">{formatDate(tender.biddingOpen)}</p>
               </div>
 
+              {/* Bidding Closes */}
               <div className="bg-gradient-to-r from-red-50 to-pink-50 p-4 rounded-xl border border-red-100 transform transition-all duration-200 hover:scale-105">
                 <div className="flex items-center gap-2 mb-2">
                   <Clock className="w-5 h-5 text-red-600" />
@@ -64,21 +69,26 @@ export const TenderHeader: React.FC<TenderHeaderProps> = ({
                 <p className="text-red-800 font-medium">{formatDate(tender.biddingClosed)}</p>
               </div>
 
+              {/* Region */}
               <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-xl border border-green-100 transform transition-all duration-200 hover:scale-105">
                 <div className="flex items-center gap-2 mb-2">
                   <MapPin className="w-5 h-5 text-green-600" />
                   <span className="font-semibold text-green-900">Region</span>
                 </div>
-                <p className="text-green-800 font-medium">{tender.region?.name || 'Not specified'}</p>
+                <p className="text-green-800 font-medium">
+                  {tender.region?.name ?? 'Not specified'}
+                </p>
               </div>
 
+              {/* Category + Subcategory */}
               <div className="bg-gradient-to-r from-purple-50 to-violet-50 p-4 rounded-xl border border-purple-100 transform transition-all duration-200 hover:scale-105">
                 <div className="flex items-center gap-2 mb-2">
                   <Tag className="w-5 h-5 text-purple-600" />
                   <span className="font-semibold text-purple-900">Category</span>
                 </div>
                 <p className="text-purple-800 font-medium">
-                  {tender.category.name} - {tender.subcategory.name}
+                  {tender.category?.name ?? 'No Category'}
+                  {tender.subcategory ? ` - ${tender.subcategory.name}` : ''}
                 </p>
               </div>
             </div>
@@ -90,12 +100,18 @@ export const TenderHeader: React.FC<TenderHeaderProps> = ({
           <div className="text-center">
             <div
               className={`text-2xl font-bold mb-2 ${
-                isExpired ? 'text-red-600' : daysRemaining <= 7 ? 'text-orange-600' : 'text-green-600'
+                isExpired
+                  ? 'text-red-600'
+                  : daysRemaining <= 7
+                  ? 'text-orange-600'
+                  : 'text-green-600'
               }`}
             >
               {isExpired ? 'Expired' : `${daysRemaining} days`}
             </div>
-            <div className="text-sm text-gray-600 mb-4">{isExpired ? 'Bidding closed' : 'remaining'}</div>
+            <div className="text-sm text-gray-600 mb-4">
+              {isExpired ? 'Bidding closed' : 'remaining'}
+            </div>
 
             {/* Action Buttons */}
             <div className="flex gap-2">

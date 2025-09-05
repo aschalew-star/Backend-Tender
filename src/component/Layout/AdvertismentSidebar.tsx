@@ -11,16 +11,38 @@ const adVariants = {
 const AdvertisementSidebar = ({ advertisements }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
+  const [failedImages, setFailedImages] = useState(new Set());
+  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
 
+  // Normalize image path by removing '/Uploads'
+  const normalizeImagePath = (path) => {
+    if (!path) return '/fallback-image.jpg';
+    return path.replace('/Uploads', '');
+  };
+
+  // Log advertisements and their full image URLs for debugging
   useEffect(() => {
-    if (advertisements.length === 0 || isHovered) return;
+    console.log('Advertisements:', advertisements);
+    advertisements.forEach((ad, index) => {
+      const fullImageUrl = `${baseUrl}${normalizeImagePath(ad.image)}`;
+      console.log(`Ad ${index}:`, {
+        id: ad.id,
+        image: fullImageUrl,
+        url: ad.url,
+      });
+    });
+  }, [advertisements, baseUrl]);
+
+  // Auto-rotate carousel
+  useEffect(() => {
+    if (!advertisements || advertisements.length === 0 || isHovered) return;
 
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % advertisements.length);
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [advertisements.length, isHovered]);
+  }, [advertisements, isHovered]);
 
   const handlePrevious = () => {
     setCurrentIndex((prev) => (prev - 1 + advertisements.length) % advertisements.length);
@@ -30,7 +52,14 @@ const AdvertisementSidebar = ({ advertisements }) => {
     setCurrentIndex((prev) => (prev + 1) % advertisements.length);
   };
 
+  const handleImageError = (url) => {
+    const fullUrl = `${baseUrl}${normalizeImagePath(url)}`;
+    console.error(`Image failed to load: ${fullUrl}`);
+    setFailedImages((prev) => new Set(prev).add(url));
+  };
+
   const handleAdClick = (ad) => {
+    if (!ad?.url) return;
     if (ad.url.startsWith('http')) {
       window.open(ad.url, '_blank', 'noopener,noreferrer');
     } else {
@@ -38,7 +67,7 @@ const AdvertisementSidebar = ({ advertisements }) => {
     }
   };
 
-  if (advertisements.length === 0) {
+  if (!advertisements || advertisements.length === 0) {
     return (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -80,7 +109,11 @@ const AdvertisementSidebar = ({ advertisements }) => {
               <AnimatePresence mode="wait">
                 <motion.img
                   key={currentIndex}
-                  src={advertisements[currentIndex].image}
+                  src={
+                    failedImages.has(advertisements[currentIndex]?.image)
+                      ? '/fallback-image.jpg'
+                      : `${baseUrl}${normalizeImagePath(advertisements[currentIndex]?.image)}`
+                  }
                   alt={`Advertisement ${currentIndex + 1}`}
                   variants={adVariants}
                   initial="enter"
@@ -88,6 +121,7 @@ const AdvertisementSidebar = ({ advertisements }) => {
                   exit="exit"
                   transition={{ duration: 0.4 }}
                   className="w-full h-full object-cover"
+                  onError={() => handleImageError(advertisements[currentIndex]?.image)}
                 />
               </AnimatePresence>
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
@@ -144,27 +178,30 @@ const AdvertisementSidebar = ({ advertisements }) => {
         {/* Smaller Ads */}
         <AnimatePresence>
           {advertisements.slice(1, 4).map((ad, index) => (
-            <motion.div
-              key={ad.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ delay: index * 0.1 }}
-              className="relative bg-white rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition-all duration-300 border border-gray-100/30 group"
-              onClick={() => handleAdClick(ad)}
-              role="button"
-              tabIndex={0}
-              aria-label={`View advertisement ${index + 2}`}
-            >
-              <div className="relative h-40 w-full overflow-hidden">
-                <img
-                  src={ad.image}
-                  alt={`Advertisement ${index + 2}`}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-              </div>
-            </motion.div>
+            !failedImages.has(ad.image) && (
+              <motion.div
+                key={ad.id || index}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ delay: index * 0.1 }}
+                className="relative bg-white rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition-all duration-300 border border-gray-100/30 group"
+                onClick={() => handleAdClick(ad)}
+                role="button"
+                tabIndex={0}
+                aria-label={`View advertisement ${index + 2}`}
+              >
+                <div className="relative h-40 w-full overflow-hidden">
+                  <img
+                    src={`${baseUrl}${normalizeImagePath(ad.image)}`}
+                    alt={`Advertisement ${index + 2}`}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    onError={() => handleImageError(ad.image)}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                </div>
+              </motion.div>
+            )
           ))}
         </AnimatePresence>
       </div>

@@ -24,7 +24,10 @@ import NotificationSettingsPage from "./pages/NotificationSettingPage.tsx";
 import Billing from "./pages/Billing.tsx";
 import NotificationPage from "./pages/NotificationPage.tsx";
 import { CheckoutPage } from "./pages/Checkout.tsx";
- import FAQ from "./pages/FAQ.tsx";
+import FAQ from "./pages/FAQ.tsx";
+import Categoriess from "./pages/admin/Catagory.tsx";
+import Advertis from "./pages/admin/Advertis"
+ import Subcatagorys from "./pages/admin/Subcatagorys.tsx"
 
 
 
@@ -36,7 +39,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/Tenders" element={<AllTender />} />
         <Route path="/FAQ" element={<FAQ />} />
-        <Route path="/checkout/:documentId" element={<CheckoutPage />} />
+        <Route path="/checkout/:id" element={<CheckoutPage />} />
         <Route path="/Documents" element={<WrappedTenderDocPage />} />
         <Route path="/TenderDetailPage/:id" element={<TenderDetailPage />} />
         <Route path="/home" element={<StartPage/>} />
@@ -48,6 +51,9 @@ function App() {
         <Route path="/admin/tender-create" element={<TenderCreate />} />
         <Route path="/login" element={<Login />} />
         <Route path="/Signup" element={<Signup  />} />
+        <Route path="/admin/Categories" element={<Categoriess/>} />
+        <Route path="/admin/Subcategories" element={<Subcatagorys/>} />
+        <Route path="/admin/Advertisement" element={<Advertis/>} />
         <Route path="/admin/dashboard" element={<Dashboardoverview />} />
         <Route path="/admin/Payment" element={<Payment />} />
         <Route path="/admin/Payment/create" element={<Createpayment />} />

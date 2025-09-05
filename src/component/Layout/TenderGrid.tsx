@@ -1,6 +1,4 @@
-"use client";
-
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Grid, List, Loader2, Search } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { TenderCard } from "./TenderCard";
@@ -40,12 +38,13 @@ export function TenderGrid({
     },
   };
 
+  const baseUrl = "http://localhost:4000";
+
   const itemVariants = {
     hidden: { opacity: 0, y: 20, scale: 0.95 },
     visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.4, ease: "easeOut" } },
   };
 
-  // Detect mobile device (viewport width < 1024px) and update on resize
   const [isMobile, setIsMobile] = useState(typeof window !== "undefined" && window.innerWidth < 1024);
 
   useEffect(() => {
@@ -53,16 +52,20 @@ export function TenderGrid({
       const mobile = window.innerWidth < 1024;
       setIsMobile(mobile);
       if (mobile && viewMode !== "single") {
-        onViewModeChange("single"); // Force list layout on smaller screens
+        onViewModeChange("single");
       }
     };
-    window.addEventListener("resize", handleResize);
     handleResize();
+    window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, [onViewModeChange, viewMode]);
 
-  // Function to interleave ads after every 3 tenders on mobile
-  const getInterleavedItems = () => {
+  const normalizeImagePath = (path: string) => {
+    return path.startsWith("/") ? path : `/${path}`;
+  };
+
+  const interleavedItems = useMemo(() => {
+    console.log("TenderGrid: Rendering tenders:", tenders.map((t) => ({ id: t.id, title: t.title })));
     if (!isMobile || advertisements.length === 0) {
       return tenders.map((tender) => ({ type: "tender" as const, data: tender }));
     }
@@ -80,13 +83,17 @@ export function TenderGrid({
     });
 
     return interleaved;
-  };
+  }, [tenders, advertisements, isMobile]);
 
-  const interleavedItems = getInterleavedItems();
+  const handleAdClick = (ad: Advertisement, e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log("TenderGrid: Advertisement clicked:", { id: ad.id, url: ad.url });
+    window.open(ad.url, "_blank", "noopener,noreferrer");
+  };
 
   return (
     <div className="space-y-6">
-      {/* Loading State */}
       {isLoading && (
         <motion.div
           initial={{ opacity: 0 }}
@@ -119,7 +126,6 @@ export function TenderGrid({
         </motion.div>
       )}
 
-      {/* Main Content */}
       {!isLoading && (
         <motion.div
           variants={containerVariants}
@@ -127,7 +133,6 @@ export function TenderGrid({
           animate="visible"
           className="space-y-6"
         >
-          {/* Header */}
           <motion.div
             className="bg-white/80 backdrop-blur-md rounded-3xl p-5 shadow-sm border border-indigo-100/20"
             initial={{ y: -20, opacity: 0 }}
@@ -141,7 +146,6 @@ export function TenderGrid({
                   <span className="font-medium text-indigo-600">{tenders.length}</span> opportunities available
                 </p>
               </div>
-              {/* Show view mode toggle only on large screens */}
               {!isMobile && (
                 <div className="flex items-center gap-2">
                   <motion.button
@@ -179,7 +183,6 @@ export function TenderGrid({
             </div>
           </motion.div>
 
-          {/* No Results State */}
           <AnimatePresence>
             {tenders.length === 0 && (
               <motion.div
@@ -199,7 +202,6 @@ export function TenderGrid({
             )}
           </AnimatePresence>
 
-          {/* Tender Grid with Interleaved Ads */}
           {tenders.length > 0 && (
             <motion.div
               variants={containerVariants}
@@ -209,18 +211,26 @@ export function TenderGrid({
                   : "grid-cols-1 max-w-3xl mx-auto"
               }`}
             >
-              {interleavedItems.map((item, index) =>
-                item.type === "tender" ? (
+              {interleavedItems.map((item, index) => {
+                console.log("TenderGrid: Rendering item:", { type: item.type, id: item.data.id });
+                return item.type === "tender" ? (
                   <motion.div
-                    key={`tender-${(item.data as Tender).id}`}
+                    key={`tender-${item.data.id}`}
                     variants={itemVariants}
                     whileHover={{ scale: 1.02 }}
                     className="group"
+                    style={{ zIndex: 10 }} // Ensure tenders are above ads
                   >
                     <TenderCard
                       tender={item.data as Tender}
                       isSubscribed={isSubscribed}
-                      onViewDetails={onViewTenderDetails}
+                      onViewDetails={(tender) => {
+                        console.log("TenderGrid: onViewDetails called with:", {
+                          id: tender.id,
+                          title: tender.title,
+                        });
+                        onViewTenderDetails(tender);
+                      }}
                       className="h-full"
                     />
                   </motion.div>
@@ -230,34 +240,40 @@ export function TenderGrid({
                     variants={itemVariants}
                     whileHover={{ scale: 1.02 }}
                     className="group"
+                    style={{ zIndex: 5 }} // Ensure ads are below tenders
+                    onClick={(e) => e.stopPropagation()}
+                    onTouchStart={(e) => e.stopPropagation()}
                   >
-                    <a
-                      href={(item.data as Advertisement).url}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <div
                       className="block h-full bg-white rounded-3xl shadow-md border border-indigo-100/20 overflow-hidden transition-all duration-300 group-hover:shadow-lg"
-                      aria-label="Sponsored advertisement"
+                      onClick={(e) => handleAdClick(item.data as Advertisement, e)}
+                      onTouchStart={(e) => handleAdClick(item.data as Advertisement, e)}
+                      role="link"
+                      aria-label={`Sponsored advertisement ${(item.data as Advertisement).id}`}
                     >
                       <motion.div
                         className="absolute inset-0 bg-gradient-to-br from-indigo-50/20 via-purple-50/20 to-pink-50/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
                         aria-hidden="true"
                       />
                       <img
-                        src={(item.data as Advertisement).image}
-                        alt="Sponsored Advertisement"
+                        src={`${baseUrl}${normalizeImagePath((item.data as Advertisement).image)}`}
+                        alt={`Sponsored Advertisement ${(item.data as Advertisement).id}`}
                         className="w-full h-40 object-cover"
+                        onError={(e) => {
+                          console.error("TenderGrid: Ad image failed to load:", (item.data as Advertisement).image);
+                          e.currentTarget.src = "/fallback-image.jpg";
+                        }}
                       />
                       <div className="p-4">
                         <p className="text-xs font-medium text-indigo-600">Sponsored Content</p>
                       </div>
-                    </a>
+                    </div>
                   </motion.div>
-                )
-              )}
+                );
+              })}
             </motion.div>
           )}
 
-          {/* Load More Button */}
           {tenders.length > 0 && hasMore && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -268,7 +284,14 @@ export function TenderGrid({
               <motion.button
                 whileHover={{ scale: 1.05, boxShadow: "0 4px 16px rgba(79,70,229,0.2)" }}
                 whileTap={{ scale: 0.95 }}
-                onClick={onLoadMore}
+                onClick={() => {
+                  console.log("TenderGrid: Load More clicked");
+                  onLoadMore();
+                }}
+                onTouchStart={() => {
+                  console.log("TenderGrid: Load More touched");
+                  onLoadMore();
+                }}
                 className="px-8 py-2.5 bg-indigo-600 text-white rounded-lg text-sm font-semibold shadow-sm flex items-center justify-center gap-2 mx-auto transition-all focus:outline-none focus:ring-2 focus:ring-indigo-300"
                 aria-label="Load more tenders"
                 disabled={isLoading}
