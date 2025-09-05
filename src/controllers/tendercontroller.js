@@ -289,26 +289,115 @@ const getAllTenders = asynerror(async (req, res, next) => {
   }
 });
 
-// const getTenderById = asynerror(async (req, res, next) => {
-//   const tender = await prisma.tender.findUnique({
-//     where: { id: parseInt(req.params.id) },
-//     include: {
-//       category: true,
-//       subcategory: true,
-//       postedBy: { select: { id: true, firstName: true, lastName: true, email: true } },
-//       approvedBy: { select: { id: true, firstName: true, lastName: true, email: true } },
-//       tenderDocs: true,
-//       biddingDocs: true,
-//       reminders: true,
-//     },
-//   });
+// Controller: Get Tender by ID
+const getTenderById = asynerror(async (req, res, next) => {
+  const tenderId = parseInt(req.params.id, 10);
 
-//   if (!tender) {
-//     return next(new handleError('Tender not found', 404));
-//   }
+  if (isNaN(tenderId)) {
+    return next(new handleError('Invalid tender ID', 400));
+  }
 
-//   res.json({ status: 'success', data: tender });
-// });
+  try {
+    const tender = await prisma.tender.findUnique({
+      where: { id: tenderId },
+      include: {
+        category: true,
+        subcategory: true,
+        region: true,
+        postedBy: {
+          select: { id: true, firstName: true, lastName: true, email: true, phoneNo: true },
+        },
+        approvedBy: {
+          select: { id: true, firstName: true, lastName: true, email: true, phoneNo: true },
+        },
+        tenderDocs: true,
+        biddingDocs: true,
+      },
+    });
+
+    if (!tender) {
+      return next(new handleError('Tender not found', 404));
+    }
+
+    // Format response to match frontend expectations
+    const formattedTender = {
+      id: tender.id,
+      title: tender.title,
+      description: tender.description || '',
+      biddingOpen: tender.biddingOpen.toISOString(),
+      biddingClosed: tender.biddingClosed.toISOString(),
+      categoryId: tender.categoryId,
+      category: tender.category
+        ? { id: tender.category.id, name: tender.category.name, createdAt: tender.category.createdAt }
+        : null,
+      subcategoryId: tender.subcategoryId,
+      subcategory: tender.subcategory
+        ? {
+            id: tender.subcategory.id,
+            name: tender.subcategory.name,
+            createdBy: tender.subcategory.createdBy,
+            createdAt: tender.subcategory.createdAt,
+            categoryId: tender.subcategory.categoryId,
+          }
+        : null,
+      regionId: tender.regionId,
+      region: tender.region
+        ? { id: tender.region.id, name: tender.region.name, createdAt: tender.region.createdAt }
+        : null,
+      postedById: tender.postedById,
+      postedBy: tender.postedBy
+        ? {
+            id: tender.postedBy.id,
+            firstName: tender.postedBy.firstName,
+            lastName: tender.postedBy.lastName,
+            email: tender.postedBy.email,
+            phoneNo: tender.postedBy.phoneNo,
+          }
+        : null,
+      approvedById: tender.approvedById,
+      approvedBy: tender.approvedBy
+        ? {
+            id: tender.approvedBy.id,
+            firstName: tender.approvedBy.firstName,
+            lastName: tender.approvedBy.lastName,
+            email: tender.approvedBy.email,
+            phoneNo: tender.approvedBy.phoneNo,
+          }
+        : null,
+      approvedAt: tender.approvedAt ? tender.approvedAt.toISOString() : null,
+      type: tender.type,
+      tenderDocs: tender.tenderDocs.map((doc) => ({
+        id: doc.id,
+        name: doc.name,
+        title: doc.title,
+        file: doc.file,
+        price: doc.price ? doc.price.toString() : null,
+        type: doc.type,
+        createdAt: doc.createdAt.toISOString(),
+        tenderId: doc.tenderId,
+      })),
+      biddingDocs: tender.biddingDocs.map((doc) => ({
+        id: doc.id,
+        title: doc.title,
+        description: doc.description || '',
+        company: doc.company,
+        file: doc.file,
+        price: doc.price ? doc.price.toString() : null,
+        type: doc.type,
+        tenderId: doc.tenderId,
+      })),
+    };
+
+    res.json({
+      status: 'success',
+      data: formattedTender,
+    });
+  } catch (error) {
+    console.error('Failed to fetch tender:', error);
+    return next(new handleError(`Failed to fetch tender: ${error.message}`, 500));
+  }
+});
+
 
 // Configure logging
 const logger = winston.createLogger({
@@ -752,7 +841,7 @@ const updateTender = asynerror(async (req, res, next) => {
 
 module.exports = {
   createtender,
-  getAllTenders,updateTender
+  getAllTenders,updateTender,getTenderById
   // createTenderNoFiles,
   // getAllTenders,
   // getTenderById,

@@ -52,6 +52,9 @@ model SystemUser {
   reminders            Reminder[]            @relation("ReminderUser")
   pendingNotifications PendingNotification[] @relation("PendingNotificationUser")
   notificationLogs     NotificationLog[]     @relation("NotificationLogUser")
+  advertisements       Advertisement[]       @relation("AdvertisementUser")
+  categoriesCreated    Category[]            @relation("CategoryCreatedBy")
+  subcategoriesCreated Subcategory[]         @relation("SubcategoryCreatedBy")
 }
 
 model Customer {
@@ -84,23 +87,20 @@ model Tender {
   biddingOpen   DateTime
   biddingClosed DateTime
 
-  categoryId Int
-  category   Category @relation(fields: [categoryId], references: [id])
-
+  categoryId    Int
+  category      Category @relation(fields: [categoryId], references: [id])
   subcategoryId Int
   subcategory   Subcategory @relation(fields: [subcategoryId], references: [id])
+  regionId      Int?
+  region        Region? @relation(fields: [regionId], references: [id])
 
-  regionId Int?
-  region   Region? @relation(fields: [regionId], references: [id])
+  postedById    Int?
+  postedBy      SystemUser? @relation("PostedBy", fields: [postedById], references: [id])
+  approvedById  Int?
+  approvedBy    SystemUser? @relation("ApprovedBy", fields: [approvedById], references: [id])
 
-  postedById Int?
-  postedBy   SystemUser? @relation("PostedBy", fields: [postedById], references: [id])
-
-  approvedById Int?
-  approvedBy   SystemUser? @relation("ApprovedBy", fields: [approvedById], references: [id])
-
-  approvedAt DateTime?
-  type       PRICETYPE @default(FREE)
+  approvedAt    DateTime?
+  type          PRICETYPE @default(FREE)
 
   tenderDocs           TenderDoc[]
   biddingDocs          BiddingDoc[]
@@ -137,19 +137,16 @@ model BiddingDoc {
 }
 
 model Payment {
-  id         Int      @id @default(autoincrement())
-  customerId Int
-  customer   Customer @relation("PaymentCustomer", fields: [customerId], references: [id])
-
-  bankId Int
-  bank   Bank @relation(fields: [bankId], references: [id])
-
+  id           Int      @id @default(autoincrement())
+  customerId   Int
+  customer     Customer @relation("PaymentCustomer", fields: [customerId], references: [id])
+  bankId       Int
+  bank         Bank @relation(fields: [bankId], references: [id])
   approvedById Int?
   approvedBy   SystemUser? @relation("PaymentApprovedBy", fields: [approvedById], references: [id])
-
-  price      Float
-  approvedAt DateTime?
-  howLong    PRIMUIMETYPE?
+  price        Float
+  approvedAt   DateTime?
+  howLong      PRIMUIMETYPE?
 }
 
 model Bank {
@@ -166,6 +163,8 @@ model Category {
   name          String
   createdAt     DateTime           @default(now())
   createdBy     Int?
+  systemUser    SystemUser?        @relation("CategoryCreatedBy", fields: [createdBy], references: [id])
+  status        String             @default("active")
   tenders       Tender[]
   subcategories Subcategory[]      @relation("CategoryToSubcategory")
   reminders     ReminderCategory[] @relation("ReminderCategory")
@@ -175,6 +174,7 @@ model Subcategory {
   id         Int                   @id @default(autoincrement())
   name       String
   createdBy  Int?
+  systemUser SystemUser?           @relation("SubcategoryCreatedBy", fields: [createdBy], references: [id])
   createdAt  DateTime              @default(now())
   categoryId Int
   category   Category?             @relation("CategoryToSubcategory", fields: [categoryId], references: [id])
@@ -220,9 +220,6 @@ model ActivityLog {
 model Reminder {
   id            Int                    @id @default(autoincrement())
   dueDate       DateTime?
-
-
-  
   type          NotificationPreference @default(DAILY)
   userId        Int?
   user          SystemUser?            @relation("ReminderUser", fields: [userId], references: [id])
@@ -293,4 +290,17 @@ model NotificationLog {
   status                String // 'success', 'failed', 'retry'
   errorMessage          String?
   createdAt             DateTime             @default(now())
+}
+
+model Advertisement {
+  id         Int        @id @default(autoincrement())
+  url        String
+  image      String
+  createdAt  DateTime   @default(now())
+  status     String
+  title      String
+  startDate  DateTime   @default(now())
+  endDate    DateTime
+  createdBy  Int
+  systemUser SystemUser @relation("AdvertisementUser", fields: [createdBy], references: [id])
 }

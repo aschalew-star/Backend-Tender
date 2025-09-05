@@ -10,6 +10,8 @@ const Bank = require('./routes/Bank.js');
 const payment = require('./routes/payment.js');
 const notification=require('./routes/Notification.js')
 const { runSubscriptionCheck } = require("./utili/Scheduler.js")
+const catagory = require('./routes/Catagory.js')
+const advertisement = require('./routes/Advertisment.js')
 const path = require('path');
 
 dotenv.config();
@@ -34,6 +36,7 @@ runSubscriptionCheck()
 // Serve /Uploads folder as /uploads in browser
 // app.use('/uploads', express.static(path.join(__dirname, 'Uploads')));
 app.use(express.static(path.join(__dirname, 'Uploads')));
+app.use('/uploads/advertisements', express.static(path.join(__dirname, 'Uploads/Advertisements')));
 
 app.get('/test', (req, res) => {
   res.json({ message: 'Hello from the server!' });
@@ -42,6 +45,8 @@ app.get('/test', (req, res) => {
 app.use('/api/users', userRouter);
 app.use('/api/tender', tender);
 app.use('/api/subcatagory', subcatagory);
+app.use('/api/advertisement',advertisement);
+app.use('/api/catagory', catagory);
 app.use('/api/region', region);
 app.use('/api/Bank', Bank);
 app.use('/api/notification', notification);

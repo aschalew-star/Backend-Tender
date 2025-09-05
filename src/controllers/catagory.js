@@ -1,174 +1,172 @@
-const express = require('express');
-const winston = require('winston');
-const { PrismaClient } = require('@prisma/client');
-const { categoryValidation, validate } = require('../validators/category');
-const { restrictToSystemUser } = require('../middleware/auth');
+const prisma = require('../config/db');
 
-const prisma = new PrismaClient();
-const router = express.Router();
+// Helper: Validate status
+const isValidStatus = (status) => ['active', 'inactive'].includes(status);
 
-// Create Category
-router.post('/', restrictToSystemUser, categoryValidation, validate, async (req, res) => {
+// GET all categories with pagination
+exports.getAllCategories = async (req, res) => {
   try {
-    const { name } = req.body;
-
-    const category = await prisma.$transaction(async (tx) => {
-      const newCategory = await tx.category.create({
-        data: {
-          name,
-          createdAt: new Date(),
-        },
-      });
-
-      await tx.activityLog.create({
-        data: {
-          method: 'POST',
-          role: req.user.role,
-          action: 'CREATE_CATEGORY',
-          userId: req.user.id,
-          detail: `Created category: ${name} (ID: ${newCategory.id})`,
-          createdAt: new Date(),
-        },
-      });
-
-      return newCategory;
-    });
-
-    res.status(201).json({
-      status: 'success',
-      data: category,
-      message: 'Category created successfully',
-    });
-  } catch (error) {
-    winston.error(`Error creating category: ${error.message}`, { error });
-    if (error.code === 'P2002') {
-      return res.status(400).json({ status: 'error', error: 'Category name already exists' });
-    }
-    res.status(500).json({ status: 'error', error: 'Failed to create category' });
-  }
-});
-
-// Get All Categories
-router.get('/', restrictToSystemUser, async (req, res) => {
-  try {
-    const { page = 1, limit = 10 } = req.query;
-    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 5;
+    const skip = (page - 1) * limit;
 
     const [categories, total] = await Promise.all([
       prisma.category.findMany({
         skip,
-        take: parseInt(limit),
+        take: limit,
         orderBy: { createdAt: 'desc' },
+        include: {
+          systemUser: { select: { id: true, firstName: true, lastName: true } },
+          subcategories: { select: { id: true } },
+          tenders: { select: { id: true } },
+        },
       }),
       prisma.category.count(),
     ]);
 
+    const formattedCategories = categories.map((cat) => ({
+      id: cat.id,
+      name: cat.name,
+      createdAt: cat.createdAt.toISOString(),
+      createdBy: cat.createdBy,
+      status: cat.status,
+      subcategoryCount: cat.subcategories.length,
+      tenderCount: cat.tenders.length,
+    }));
+
     res.json({
-      status: 'success',
-      data: categories,
-      meta: { total, page: parseInt(page), limit: parseInt(limit), totalPages: Math.ceil(total / limit) },
+      data: formattedCategories,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
     });
   } catch (error) {
-    winston.error(`Error fetching categories: ${error.message}`, { error });
-    res.status(500).json({ status: 'error', error: 'Failed to fetch categories' });
+    console.error('Error fetching categories:', error);
+    res.status(500).json({ message: 'Failed to fetch categories' });
   }
-});
+};
 
-// Get Single Category
-router.get('/:id', restrictToSystemUser, [
-  param('id').isInt().withMessage('Category ID must be an integer'),
-], validate, async (req, res) => {
+// CREATE new category
+exports.createCategory = async (req, res) => {
+  const { name, status } = req.body;
+  const createdBy = req.user?.id; // Assume req.user.id from auth middleware
+
+  // Validation
+  if (!name || name.trim().length === 0) {
+    return res.status(400).json({ message: 'Name is required' });
+  }
+  if (!status || !isValidStatus(status)) {
+    return res.status(400).json({ message: 'Status must be active or inactive' });
+  }
+  if (!createdBy || isNaN(parseInt(createdBy))) {
+    return res.status(400).json({ message: 'Valid creator ID is required' });
+  }
+
+  try {
+    const category = await prisma.category.create({
+      data: {
+        name: name.trim(),
+        status,
+        createdBy: parseInt(createdBy),
+      },
+      include: {
+        subcategories: { select: { id: true } },
+        tenders: { select: { id: true } },
+      },
+    });
+
+    res.status(201).json({
+      data: {
+        id: category.id,
+        name: category.name,
+        createdAt: category.createdAt.toISOString(),
+        createdBy: category.createdBy,
+        status: category.status,
+        subcategoryCount: category.subcategories.length,
+        tenderCount: category.tenders.length,
+      },
+    });
+  } catch (error) {
+    console.error('Error creating category:', error);
+    res.status(500).json({ message: 'Failed to create category' });
+  }
+};
+
+// UPDATE category
+exports.updateCategory = async (req, res) => {
+  const { id } = req.params;
+  const { name, status } = req.body;
+
+  // Validation
+  if (!name && !status) {
+    return res.status(400).json({ message: 'At least one field (name or status) is required' });
+  }
+  if (name && name.trim().length === 0) {
+    return res.status(400).json({ message: 'Name cannot be empty' });
+  }
+  if (status && !isValidStatus(status)) {
+    return res.status(400).json({ message: 'Status must be active or inactive' });
+  }
+
+  try {
+    const existingCategory = await prisma.category.findUnique({
+      where: { id: parseInt(id) },
+    });
+    if (!existingCategory) {
+      return res.status(404).json({ message: 'Category not found' });
+    }
+
+    const updateData = {};
+    if (name) updateData.name = name.trim();
+    if (status) updateData.status = status;
+
+    const category = await prisma.category.update({
+      where: { id: parseInt(id) },
+      data: updateData,
+      include: {
+        subcategories: { select: { id: true } },
+        tenders: { select: { id: true } },
+      },
+    });
+
+    res.json({
+      data: {
+        id: category.id,
+        name: category.name,
+        createdAt: category.createdAt.toISOString(),
+        createdBy: category.createdBy,
+        status: category.status,
+        subcategoryCount: category.subcategories.length,
+        tenderCount: category.tenders.length,
+      },
+    });
+  } catch (error) {
+    console.error('Error updating category:', error);
+    res.status(500).json({ message: 'Failed to update category' });
+  }
+};
+
+// DELETE category
+exports.deleteCategory = async (req, res) => {
+  const { id } = req.params;
+
   try {
     const category = await prisma.category.findUnique({
-      where: { id: parseInt(req.params.id) },
+      where: { id: parseInt(id) },
     });
-
     if (!category) {
-      return res.status(404).json({ status: 'error', error: 'Category not found' });
+      return res.status(404).json({ message: 'Category not found' });
     }
 
-    res.json({ status: 'success', data: category });
-  } catch (error) {
-    winston.error(`Error fetching category: ${error.message}`, { error });
-    res.status(500).json({ status: 'error', error: 'Failed to fetch category' });
-  }
-});
-
-// Update Category
-router.put('/:id', restrictToSystemUser, categoryValidation, validate, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { name } = req.body;
-
-    const category = await prisma.$transaction(async (tx) => {
-      const updatedCategory = await tx.category.update({
-        where: { id: parseInt(id) },
-        data: {
-          name,
-          createdAt: new Date(),
-        },
-      });
-
-      await tx.activityLog.create({
-        data: {
-          method: 'PUT',
-          role: req.user.role,
-          action: 'UPDATE_CATEGORY',
-          userId: req.user.id,
-          detail: `Updated category: ${name} (ID: ${updatedCategory.id})`,
-          createdAt: new Date(),
-        },
-      });
-
-      return updatedCategory;
+    await prisma.category.delete({
+      where: { id: parseInt(id) },
     });
-
-    res.json({ status: 'success', data: category, message: 'Category updated successfully' });
+    res.json({ message: 'Category deleted successfully' });
   } catch (error) {
-    winston.error(`Error updating category: ${error.message}`, { error });
-    if (error.code === 'P2025') {
-      return res.status(404).json({ status: 'error', error: 'Category not found' });
-    }
-    if (error.code === 'P2002') {
-      return res.status(400).json({ status: 'error', error: 'Category name already exists' });
-    }
-    res.status(500).json({ status: 'error', error: 'Failed to update category' });
+    console.error('Error deleting category:', error);
+    res.status(500).json({ message: 'Failed to delete category' });
   }
-});
-
-// Delete Category
-router.delete('/:id', restrictToSystemUser, [
-  param('id').isInt().withMessage('Category ID must be an integer'),
-], validate, async (req, res) => {
-  try {
-    await prisma.$transaction(async (tx) => {
-      const category = await tx.category.findUnique({ where: { id: parseInt(req.params.id) } });
-      if (!category) {
-        throw new Error('Category not found');
-      }
-
-      await tx.category.delete({ where: { id: parseInt(req.params.id) } });
-
-      await tx.activityLog.create({
-        data: {
-          method: 'DELETE',
-          role: req.user.role,
-          action: 'DELETE_CATEGORY',
-          userId: req.user.id,
-          detail: `Deleted category ID: ${req.params.id}`,
-          createdAt: new Date(),
-        },
-      });
-    });
-
-    res.status(204).json({ status: 'success', message: 'Category deleted successfully' });
-  } catch (error) {
-    winston.error(`Error deleting category: ${error.message}`, { error });
-    if (error.message === 'Category not found') {
-      return res.status(404).json({ status: 'error', error: 'Category not found' });
-    }
-    res.status(500).json({ status: 'error', error: 'Failed to delete category' });
-  }
-});
-
-module.exports = router;
+};

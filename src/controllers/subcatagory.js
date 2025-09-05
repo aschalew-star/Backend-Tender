@@ -1,194 +1,226 @@
-const winston = require('winston');
-const { PrismaClient } = require('@prisma/client');
-const asynerror = require('../utili/asyncerror.js');
-const handleError = require('../utili/errorhandle.js');
+const prisma = require('../config/db');
 
-const prisma = new PrismaClient();
+// Helper: Validate status
+const isValidStatus = (status) => ['active', 'inactive'].includes(status);
 
-// Create Subcategory
-const createSubcategory = asynerror(async (req, res, next) => {
-  const { name, categoryname } = req.body;
+// GET all subcategories with pagination
+exports.getAllSubcategories = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 5;
+    const skip = (page - 1) * limit;
+
+    const [subcategories, total] = await Promise.all([
+      prisma.subcategory.findMany({
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          category: { select: { id: true, name: true } },
+          tenders: { select: { id: true } },
+        },
+      }),
+      prisma.subcategory.count(),
+    ]);
+
+    const formattedSubcategories = subcategories.map((sub) => ({
+      id: sub.id,
+      name: sub.name,
+      categoryId: sub.categoryId,
+      categoryName: sub.category?.name || 'Unknown',
+      createdAt: sub.createdAt.toISOString(),
+      createdBy: sub.createdBy,
+      status: sub.status,
+      tenderCount: sub.tenders.length,
+    }));
+
+    res.json({
+      data: formattedSubcategories,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
+  } catch (error) {
+    console.error('Error fetching subcategories:', error);
+    res.status(500).json({ message: 'Failed to fetch subcategories' });
+  }
+};
+
+// GET subcategory by ID
+exports.getSubcategoryById = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const subcategory = await prisma.subcategory.findUnique({
+      where: { id: parseInt(id) },
+      include: {
+        category: { select: { id: true, name: true } },
+        tenders: { select: { id: true } },
+      },
+    });
+    if (!subcategory) {
+      return res.status(404).json({ message: 'Subcategory not found' });
+    }
+    res.json({
+      data: {
+        id: subcategory.id,
+        name: subcategory.name,
+        categoryId: subcategory.categoryId,
+        categoryName: subcategory.category?.name || 'Unknown',
+        createdAt: subcategory.createdAt.toISOString(),
+        createdBy: subcategory.createdBy,
+        status: subcategory.status,
+        tenderCount: subcategory.tenders.length,
+      },
+    });
+  } catch (error) {
+    console.error('Error fetching subcategory:', error);
+    res.status(500).json({ message: 'Failed to fetch subcategory' });
+  }
+};
+
+
+// src/controllers/subcatagory.js
+exports.createSubcategory = async (req, res) => {
+  const { name, categoryId } = req.body;
+  const createdBy = req.user?.id; // From auth middleware
+
+  // Validation
+  if (!name || name.trim().length === 0) {
+    return res.status(400).json({ message: 'Name is required' });
+  }
+  if (!categoryId || isNaN(parseInt(categoryId))) {
+    return res.status(400).json({ message: 'Valid category ID is required' });
+  }
+  if (!createdBy || isNaN(parseInt(createdBy))) {
+    return res.status(400).json({ message: 'Valid creator ID is required' });
+  }
 
   try {
-    let category = await prisma.category.findUnique({
-      where: { name: categoryname }, // Don't use parseInt on string name
+    const category = await prisma.category.findUnique({
+      where: { id: parseInt(categoryId) },
     });
+    if (!category) return res.status(404).json({ message: 'Category not found' });
 
-    // If category doesn't exist, create it
-    if (!category) {
-      category = await prisma.category.create({
-        data: {
-          name: categoryname,
-          // createdBy: req.user.id,
-        },
-      });
-    }
-
-    // Create the subcategory
-    const newSubcategory = await prisma.subcategory.create({
+    const subcategory = await prisma.subcategory.create({
       data: {
-        name,
-        categoryId: category.id,
-        createdBy: req.user.id,
-        createdAt: new Date(),
+        name: name.trim(),
+        category: { connect: { id: parseInt(categoryId) } },
+        systemUser: { connect: { id: parseInt(createdBy) } },
+      },
+      include: {
+        category: { select: { id: true, name: true } },
+        tenders: { select: { id: true } },
       },
     });
 
     res.status(201).json({
-      status: 'success',
-      data: newSubcategory,
-      message: 'Subcategory created successfully',
+      data: {
+        id: subcategory.id,
+        name: subcategory.name,
+        categoryId: subcategory.categoryId,
+        categoryName: subcategory.category?.name || 'Unknown',
+        createdAt: subcategory.createdAt.toISOString(),
+        createdBy: subcategory.systemUser?.id || null,
+        tenderCount: subcategory.tenders.length,
+      },
     });
   } catch (error) {
-    winston.error(`Error creating subcategory: ${error.message}`, { error });
-    if (error.code === 'P2002') {
-      return next(new handleError('Subcategory name already exists for this category', 400));
-    }
-    return next(new handleError(`Failed to create subcategory: ${error.message}`, 500));
+    console.error('Error creating subcategory:', error);
+    res.status(500).json({ message: 'Failed to create subcategory' });
   }
-});
+};
 
 
-// // Get All Subcategories
-// const getAllSubcategories = asynerror(async (req, res, next) => {
-//   const { page = 1, limit = 10, categoryId } = req.query;
-//   const skip = (parseInt(page) - 1) * parseInt(limit);
 
-//   const where = categoryId ? { categoryId: parseInt(categoryId) } : {};
+// UPDATE subcategory
+exports.updateSubcategory = async (req, res) => {
+  const { id } = req.params;
+  const { name, categoryId, status } = req.body;
 
-//   try {
-//     const [subcategories, total] = await Promise.all([
-//       prisma.subcategory.findMany({
-//         where,
-//         skip,
-//         take: parseInt(limit),
-//         include: { category: { select: { id: true, name: true } } },
-//         orderBy: { createdAt: 'desc' },
-//       }),
-//       prisma.subcategory.count({ where }),
-//     ]);
+  // Validation
+  if (!name && !categoryId && !status) {
+    return res.status(400).json({ message: 'At least one field (name, categoryId, or status) is required' });
+  }
+  if (name && name.trim().length === 0) {
+    return res.status(400).json({ message: 'Name cannot be empty' });
+  }
+  if (categoryId && isNaN(parseInt(categoryId))) {
+    return res.status(400).json({ message: 'Valid category ID is required' });
+  }
+  if (status && !isValidStatus(status)) {
+    return res.status(400).json({ message: 'Status must be active or inactive' });
+  }
 
-//     res.json({
-//       status: 'success',
-//       data: subcategories,
-//       meta: { total, page: parseInt(page), limit: parseInt(limit), totalPages: Math.ceil(total / limit) },
-//     });
-//   } catch (error) {
-//     winston.error(`Error fetching subcategories: ${error.message}`, { error });
-//     return next(new handleError(`Failed to fetch subcategories: ${error.message}`, 500));
-//   }
-// });
+  try {
+    const existingSubcategory = await prisma.subcategory.findUnique({
+      where: { id: parseInt(id) },
+    });
+    if (!existingSubcategory) {
+      return res.status(404).json({ message: 'Subcategory not found' });
+    }
 
-// // Get Single Subcategory
-// const getSubcategoryById = asynerror(async (req, res, next) => {
-//   await param('id').isInt().withMessage('Subcategory ID must be an integer').run(req);
-//   await validate(req, res, async () => {
-//     try {
-//       const subcategory = await prisma.subcategory.findUnique({
-//         where: { id: parseInt(req.params.id) },
-//         include: { category: { select: { id: true, name: true } } },
-//       });
+    if (categoryId) {
+      const category = await prisma.category.findUnique({
+        where: { id: parseInt(categoryId) },
+      });
+      if (!category) {
+        return res.status(404).json({ message: 'Category not found' });
+      }
+    }
 
-//       if (!subcategory) {
-//         return next(new handleError('Subcategory not found', 404));
-//       }
+    const updateData = {};
+    if (name) updateData.name = name.trim();
+    if (categoryId) updateData.categoryId = parseInt(categoryId);
+    if (status) updateData.status = status;
 
-//       res.json({ status: 'success', data: subcategory });
-//     } catch (error) {
-//       winston.error(`Error fetching subcategory: ${error.message}`, { error });
-//       return next(new handleError(`Failed to fetch subcategory: ${error.message}`, 500));
-//     }
-//   });
-// });
+    const subcategory = await prisma.subcategory.update({
+      where: { id: parseInt(id) },
+      data: updateData,
+      include: {
+        category: { select: { id: true, name: true } },
+        tenders: { select: { id: true } },
+      },
+    });
 
-// // Update Subcategory
-// const updateSubcategory = asynerror(async (req, res, next) => {
-//   await subcategoryValidation(req, res, () => {});
-//   await validate(req, res, async () => {
-//     const { id } = req.params;
-//     const { name, categoryId } = req.body;
+    res.json({
+      data: {
+        id: subcategory.id,
+        name: subcategory.name,
+        categoryId: subcategory.categoryId,
+        categoryName: subcategory.category?.name || 'Unknown',
+        createdAt: subcategory.createdAt.toISOString(),
+        createdBy: subcategory.createdBy,
+        status: subcategory.status,
+        tenderCount: subcategory.tenders.length,
+      },
+    });
+  } catch (error) {
+    console.error('Error updating subcategory:', error);
+    res.status(500).json({ message: 'Failed to update subcategory' });
+  }
+};
 
-//     try {
-//       const category = await prisma.category.findUnique({ where: { id: parseInt(categoryId) } });
-//       if (!category) {
-//         return next(new handleError('Category not found', 404));
-//       }
+// DELETE subcategory
+exports.deleteSubcategory = async (req, res) => {
+  const { id } = req.params;
 
-//       const subcategory = await prisma.$transaction(async (tx) => {
-//         const updatedSubcategory = await tx.subcategory.update({
-//           where: { id: parseInt(id) },
-//           data: {
-//             name,
-//             categoryId: parseInt(categoryId),
-//             createdAt: new Date(),
-//           },
-//         });
+  try {
+    const subcategory = await prisma.subcategory.findUnique({
+      where: { id: parseInt(id) },
+    });
+    if (!subcategory) {
+      return res.status(404).json({ message: 'Subcategory not found' });
+    }
 
-//         await tx.activityLog.create({
-//           data: {
-//             method: 'PUT',
-//             role: req.user.role,
-//             action: 'UPDATE_SUBCATEGORY',
-//             userId: req.user.id,
-//             detail: `Updated subcategory: ${name} (ID: ${updatedSubcategory.id})`,
-//             createdAt: new Date(),
-//           },
-//         });
-
-//         return updatedSubcategory;
-//       });
-
-//       res.json({ status: 'success', data: subcategory, message: 'Subcategory updated successfully' });
-//     } catch (error) {
-//       winston.error(`Error updating subcategory: ${error.message}`, { error });
-//       if (error.code === 'P2025') {
-//         return next(new handleError('Subcategory not found', 404));
-//       }
-//       if (error.code === 'P2002') {
-//         return next(new handleError('Subcategory name already exists for this category', 400));
-//       }
-//       return next(new handleError(`Failed to update subcategory: ${error.message}`, 500));
-//     }
-//   });
-// });
-
-// Delete Subcategory
-// const deleteSubcategory = asynerror(async (req, res, next) => {
-//   await param('id').isInt().withMessage('Subcategory ID must be an integer').run(req);
-//   await validate(req, res, async () => {
-//     try {
-//       await prisma.$transaction(async (tx) => {
-//         const subcategory = await tx.subcategory.findUnique({ where: { id: parseInt(req.params.id) } });
-//         if (!subcategory) {
-//           return next(new handleError('Subcategory not found', 404));
-//         }
-
-//         await tx.subcategory.delete({ where: { id: parseInt(req.params.id) } });
-
-//         await tx.activityLog.create({
-//           data: {
-//             method: 'DELETE',
-//             role: req.user.role,
-//             action: 'DELETE_SUBCATEGORY',
-//             userId: req.user.id,
-//             detail: `Deleted subcategory ID: ${req.params.id}`,
-//             createdAt: new Date(),
-//           },
-//         });
-//       });
-
-//       res.status(204).json({ status: 'success', message: 'Subcategory deleted successfully' });
-//     } catch (error) {
-//       winston.error(`Error deleting subcategory: ${error.message}`, { error });
-//       return next(new handleError(`Failed to delete subcategory: ${error.message}`, 500));
-//     }
-//   });
-// });
-
-module.exports = {
-  createSubcategory,
-  // getAllSubcategories,
-  // getSubcategoryById,
-  // updateSubcategory,
-  // deleteSubcategory,
+    await prisma.subcategory.delete({
+      where: { id: parseInt(id) },
+    });
+    res.json({ message: 'Subcategory deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting subcategory:', error);
+    res.status(500).json({ message: 'Failed to delete subcategory' });
+  }
 };
