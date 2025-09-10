@@ -2,7 +2,7 @@
 const express = require('express');
 const upload=require('../utili/multer.js');
 const {
-  createtender,getAllTenders,updateTender,getTenderById
+  createtender,getAllTenders,updateTender,getTenderById,getAllTenderDocs,getAllBiddingDocs
 //   createTenderNoFiles,
 //   getAllTenders,
 //   getTenderById,
@@ -29,6 +29,8 @@ tender.post(
   createtender
 );
 tender.get('/all', getAllTenders);
+tender.get('/tenderdoc', getAllTenderDocs);
+tender.get('/tenderbid', getAllBiddingDocs);
 tender.get('/:id',getTenderById);
 tender.patch('/update/:id', upload, updateTender);
 

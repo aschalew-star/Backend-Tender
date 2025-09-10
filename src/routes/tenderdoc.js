@@ -1,11 +1,13 @@
-import express from 'express';
-import { restrictToRoles } from '../middleware/rolebasedauth.js';
+const { getPurchasedTenderDocs,
+  getPurchasedBiddingDocs,
+    getCustomerNotifications } = require('../controllers/tenderdoc.js');
+const express = require('express');
+  
 
+const tenderdoc = express.Router();
 
-const tender = express.Router();
+tenderdoc.get('/PurchasedTenderDocs/:id', getPurchasedTenderDocs);
+tenderdoc.get('/PurchasedBiddingDocs/:id', getPurchasedBiddingDocs);
+tenderdoc.get('/tenderdoc/:id',  getCustomerNotifications);
 
-router.get('/tenderdoc', tender);
-router.post('/create-tenderdoc', createtender);
-router.get('/tenderdoc/:id',  getTenderById);
-
-export default tender;
+module.exports = tenderdoc;

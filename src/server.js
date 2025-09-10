@@ -12,6 +12,7 @@ const notification=require('./routes/Notification.js')
 const { runSubscriptionCheck } = require("./utili/Scheduler.js")
 const catagory = require('./routes/Catagory.js')
 const advertisement = require('./routes/Advertisment.js')
+const tenderDoc=require('./routes/tenderdoc.js')
 const path = require('path');
 
 dotenv.config();
@@ -44,6 +45,7 @@ app.get('/test', (req, res) => {
 
 app.use('/api/users', userRouter);
 app.use('/api/tender', tender);
+app.use('/api/tenderdoc', tenderDoc);
 app.use('/api/subcatagory', subcatagory);
 app.use('/api/advertisement',advertisement);
 app.use('/api/catagory', catagory);

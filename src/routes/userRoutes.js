@@ -3,7 +3,8 @@ const { createUser,
   getAllCustomerUsers,deleteSystemUser,
   getSystemUsers, updateSystemUser,
   getCustomerByEmail,updateUser,deletecustomer,getMe,
-    loginUser,getCustomersForPaymentForm,logoutUser
+    loginUser,getCustomersForPaymentForm,logoutUser,  getCustomerProfile,
+  updateCustomerProfile,
     // , getUserById, getAllUsers, updateUser, deleteUser, forgetPassword, changePassword
 } = require('../controllers/userController.js');
 const { UserRole } = require('@prisma/client');
@@ -22,9 +23,11 @@ router.get('/customers', getAllCustomerUsers);
 router.get('/getMe', restrictToRoles([UserRole.SUPERUSER, UserRole.ADMIN, UserRole.CUSTOMER, UserRole.DATAENTRY]),  getMe);
 router.get('/systemuser',   getSystemUsers);
 router.get('/email',   getCustomerByEmail);
-router.put('/systemuser/:id', updateSystemUser);
+router.put('/updateSystemUser/:id', updateSystemUser);
 router.get('/payform', getCustomersForPaymentForm);
+router.get('/getCustomerProfile', getCustomerProfile);
 router.put('/updateUser/:id', updateUser);
+router.put('/updateCustomerProfile/:id', updateCustomerProfile);
 router.delete('/deletesystem/:id', deleteSystemUser);
 router.delete('/deletecustomer/:id', deletecustomer);
 

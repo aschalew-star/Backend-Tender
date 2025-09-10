@@ -571,6 +571,120 @@ const logoutUser = async (req, res, next) => {
   }
 };
 
+// Get authenticated customer's profile
+const getCustomerProfile = asynerror(async (req, res, next) => {
+  const { id, type } = req.user;
+
+  if (!id || type !== 'customer') {
+    return next(new handleError('User authentication failed or invalid user type', 401));
+  }
+
+  try {
+    const customer = await prisma.customer.findUnique({
+      where: { id: parseInt(id) },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        phone: true,
+        role: true,
+        isSubscribed: true,
+        endDate: true,
+        createdAt: true,
+        payments: {
+          select: {
+            price: true,
+            howLong: true,
+          },
+          orderBy: { id: 'desc' },
+          take: 1, // Get the latest payment for subscription details
+        },
+      },
+    });
+
+    if (!customer) {
+      return next(new handleError('Customer not found', 404));
+    }
+
+    res.json({
+      data: {
+        ...customer,
+        createdAt: customer.createdAt.toISOString().split('T')[0],
+        endDate: customer.endDate ? customer.endDate.toISOString().split('T')[0] : null,
+      },
+    });
+  } catch (error) {
+    console.error('Error fetching customer profile:', error);
+    return next(new handleError('Error fetching customer profile', 500));
+  }
+});
+
+// Update authenticated customer's profile
+const updateCustomerProfile = asynerror(async (req, res, next) => {
+  const { id, type } = req.user;
+  const { firstName, lastName, phone } = req.body;
+
+  if (!id || type !== 'customer') {
+    return next(new handleError('User authentication failed or invalid user type', 401));
+  }
+
+  if (!firstName && !lastName && !phone) {
+    return next(new handleError('At least one field (firstName, lastName, phone) is required', 400));
+  }
+
+  try {
+    const existingCustomer = await prisma.customer.findUnique({
+      where: { id: parseInt(id) },
+    });
+
+    if (!existingCustomer) {
+      return next(new handleError('Customer not found', 404));
+    }
+
+    const data = {};
+    if (firstName) data.firstName = firstName;
+    if (lastName) data.lastName = lastName;
+    if (phone) data.phone = phone;
+
+    const updatedCustomer = await prisma.customer.update({
+      where: { id: parseInt(id) },
+      data,
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        phone: true,
+        role: true,
+        isSubscribed: true,
+        endDate: true,
+        createdAt: true,
+        payments: {
+          select: {
+            price: true,
+            howLong: true,
+          },
+          orderBy: { id: 'desc' },
+          take: 1,
+        },
+      },
+    });
+
+    res.json({
+      data: {
+        ...updatedCustomer,
+        createdAt: updatedCustomer.createdAt.toISOString().split('T')[0],
+        endDate: updatedCustomer.endDate ? updatedCustomer.endDate.toISOString().split('T')[0] : null,
+      },
+    });
+  } catch (error) {
+    console.error('Error updating customer profile:', error);
+    return next(new handleError('Error updating customer profile', 500));
+  }
+});
+
+
 
 
 // const forgetPassword = asynerror(async (req, res, next) => {
@@ -664,5 +778,8 @@ module.exports = {
   getAllCustomerUsers,deletecustomer,
   getCustomersForPaymentForm,
  getCustomerByEmail,getUserById
-,getMe,logoutUser
+  , getMe, logoutUser,
+  getCustomerProfile,
+  updateCustomerProfile,
+
 };

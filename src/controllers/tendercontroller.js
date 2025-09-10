@@ -647,6 +647,145 @@ const updateTender = asynerror(async (req, res, next) => {
   }
 });
 
+// Get all tender documents with pagination, search, and filter
+const getAllTenderDocs = asynerror(async (req, res, next) => {
+  try {
+    // Extract pagination, search, and filter parameters
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 10));
+    const skip = (page - 1) * limit;
+    const search = req.query.search ? String(req.query.search).toLowerCase() : '';
+    const type = ['FREE', 'PAID'].includes(req.query.type) ? req.query.type : null;
+
+    // Build Prisma query
+    const where = {};
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { title: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+    if (type) {
+      where.type = type;
+    }
+
+    // Fetch total count for pagination metadata
+    const totalDocs = await prisma.tenderDoc.count({ where });
+
+    // Fetch paginated tender documents
+    const tenderDocs = await prisma.tenderDoc.findMany({
+      skip,
+      take: limit,
+      where,
+      include: { customers: true },
+    });
+
+    // Format the documents
+    const formattedDocs = tenderDocs.map((doc) => ({
+      id: doc.id,
+      name: doc.name,
+      title: doc.title,
+      file: doc.file,
+      price: doc.price ? doc.price.toString() : null,
+      type: doc.type,
+      createdAt: doc.createdAt.toISOString(),
+      tenderId: doc.tenderId,
+      customers: doc.customers.length,
+    }));
+
+    // Calculate pagination metadata
+    const totalPages = Math.ceil(totalDocs / limit);
+    const hasNextPage = page < totalPages;
+    const hasPrevPage = page > 1;
+
+    res.json({
+      status: 'success',
+      data: formattedDocs,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalDocs,
+        limit,
+        hasNextPage,
+        hasPrevPage,
+      },
+    });
+  } catch (error) {
+    console.error('Failed to fetch tender documents:', error);
+    return next(new HandleError(`Failed to fetch tender documents: ${error.message}`, 500));
+  }
+});
+
+// Get all bidding documents with pagination, search, and filter
+const getAllBiddingDocs = asynerror(async (req, res, next) => {
+  try {
+    // Extract pagination, search, and filter parameters
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 10));
+    const skip = (page - 1) * limit;
+    const search = req.query.search ? String(req.query.search).toLowerCase() : '';
+    const type = ['FREE', 'PAID'].includes(req.query.type) ? req.query.type : null;
+
+    // Build Prisma query
+    const where = {};
+    if (search) {
+      where.OR = [
+        { title: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
+        { company: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+    if (type) {
+      where.type = type;
+    }
+
+    // Fetch total count for pagination metadata
+    const totalDocs = await prisma.biddingDoc.count({ where });
+
+    // Fetch paginated bidding documents
+    const biddingDocs = await prisma.biddingDoc.findMany({
+      skip,
+      take: limit,
+      where,
+      include: { customers: true },
+    });
+
+    // Format the documents
+    const formattedDocs = biddingDocs.map((doc) => ({
+      id: doc.id,
+      title: doc.title,
+      description: doc.description || '',
+      company: doc.company,
+      file: doc.file,
+      price: doc.price ? doc.price.toString() : null,
+      type: doc.type,
+      tenderId: doc.tenderId,
+      customers: doc.customers.length,
+    }));
+
+    // Calculate pagination metadata
+    const totalPages = Math.ceil(totalDocs / limit);
+    const hasNextPage = page < totalPages;
+    const hasPrevPage = page > 1;
+
+    res.json({
+      status: 'success',
+      data: formattedDocs,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalDocs,
+        limit,
+        hasNextPage,
+        hasPrevPage,
+      },
+    });
+  } catch (error) {
+    console.error('Failed to fetch bidding documents:', error);
+    return next(new HandleError(`Failed to fetch bidding documents: ${error.message}`, 500));
+  }
+});
+
 
 // const deleteTender = asynerror(async (req, res, next) => {
 //   await prisma.$transaction(async (tx) => {
@@ -841,7 +980,8 @@ const updateTender = asynerror(async (req, res, next) => {
 
 module.exports = {
   createtender,
-  getAllTenders,updateTender,getTenderById
+  getAllTenders,updateTender,getTenderById,getAllTenderDocs,getAllBiddingDocs
+  
   // createTenderNoFiles,
   // getAllTenders,
   // getTenderById,

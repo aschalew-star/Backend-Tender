@@ -1,443 +1,206 @@
-const express = require('express');
-const winston = require('winston');
-const authenticate = require('../middleware/auth');
-const upload = require('../utils/multerConfig');
-const fs = require('fs').promises;
-const path = require('path');
-
-const prisma = new PrismaClient();
-const router = express.Router();
-
-// Validation middleware for TenderDoc
+const prisma = require('../config/db.js');
+const asynerror = require('../utili/asyncerror.js');
+const handleError = require('../utili/errorhandle.js');
 
 
 
-// Create TenderDoc
-router.post(
-  '/:tenderId/tenderDocs',
-  upload.single('file'), // Single file upload
-  [
-    param('tenderId').isInt().withMessage('Tender ID must be an integer'),
-    ...tenderDocValidation,
-  ],
-  async (req, res) => {
-    try {
-      const { tenderId } = req.params;
-      const { name, title, price, type, customerIds = [] } = req.body;
 
-      if (!req.file) {
-        return res.status(400).json({
-          status: 'error',
-          error: 'File is required',
-        });
-      }
+// Get purchased tender documents
+const getPurchasedTenderDocs = asynerror(async (req, res, next) => {
+  const { id, type } = req.user;
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 6;
+  const search = req.query.search ? String(req.query.search).trim() : '';
+  const typeFilter = req.query.type ? String(req.query.type).toUpperCase() : 'ALL';
 
-      // Verify Tender exists
-      const tender = await prisma.tender.findUnique({
-        where: { id: parseInt(tenderId) },
-      });
-      if (!tender) {
-        await fs.unlink(req.file.path).catch(err => winston.error(`Error deleting file: ${err.message}`));
-        return res.status(404).json({
-          status: 'error',
-          error: 'Tender not found',
-        });
-      }
-
-      // Verify Customers exist
-      if (customerIds.length > 0) {
-        const customers = await prisma.customer.findMany({
-          where: { id: { in: customerIds.map(id => parseInt(id)) } },
-        });
-        if (customers.length !== customerIds.length) {
-          await fs.unlink(req.file.path).catch(err => winston.error(`Error deleting file: ${err.message}`));
-          return res.status(400).json({
-            status: 'error',
-            error: 'One or more customer IDs are invalid',
-          });
-        }
-      }
-
-      // Create TenderDoc
-      const tenderDoc = await prisma.$transaction(async (tx) => {
-        const doc = await tx.tenderDoc.create({
-          data: {
-            name,
-            title,
-            file: req.file.path, // Store file path
-            price: price ? parseFloat(price) : null,
-            type,
-            tenderId: parseInt(tenderId),
-            createdAt: new Date(),
-            customers: {
-              connect: customerIds.map(id => ({ id: parseInt(id) })),
-            },
-          },
-          include: {
-            tender: {
-              select: { id: true, title: true },
-            },
-            customers: {
-              select: { id: true, firstName: true, lastName: true, email: true },
-            },
-          },
-        });
-
-        // Log activity
-        await tx.activityLog.create({
-          data: {
-            method: 'POST',
-            role: req.user.role,
-            action: 'CREATE_TENDERDOC',
-            userId: req.user.id,
-            detail: `Created tenderDoc: ${title} (ID: ${doc.id}) for tender ID: ${tenderId}`,
-            createdAt: new Date(),
-          },
-        });
-
-        return doc;
-      });
-
-      res.status(201).json({
-        status: 'success',
-        data: tenderDoc,
-        message: 'TenderDoc created successfully',
-      });
-    } catch (error) {
-      if (req.file) {
-        await fs.unlink(req.file.path).catch(err => winston.error(`Error deleting file: ${err.message}`));
-      }
-      winston.error(`Error creating tenderDoc: ${error.message}`, { error });
-      if (error.code === 'P2002') {
-        return res.status(400).json({
-          status: 'error',
-          error: 'Duplicate tenderDoc',
-        });
-      }
-      res.status(500).json({
-        status: 'error',
-        error: 'Failed to create tenderDoc',
-        details: error.message,
-      });
-    }
+  if (!id || type !== 'customer') {
+    return next(new handleError('User authentication failed or invalid user type', 401));
   }
-);
 
-// Get All TenderDocs for a Tender
-router.get('/:tenderId/tenderDocs', [
-  param('tenderId').isInt().withMessage('Tender ID must be an integer'),
-], async (req, res) => {
+  if (page < 1 || limit < 1) {
+    return next(new handleError('Page and limit must be positive numbers', 400));
+  }
+
+  if (typeFilter !== 'ALL' && !Object.values(PRICETYPE).includes(typeFilter)) {
+    return next(new handleError(`Invalid type. Allowed types are: ${Object.values(PRICETYPE).join(', ')}`, 400));
+  }
+
+  const skip = (page - 1) * limit;
+
   try {
-    const { tenderId } = req.params;
-    const { page = 1, limit = 10 } = req.query;
-    const skip = (parseInt(page) - 1) * parseInt(limit);
-
-    const tender = await prisma.tender.findUnique({
-      where: { id: parseInt(tenderId) },
-    });
-    if (!tender) {
-      return res.status(404).json({
-        status: 'error',
-        error: 'Tender not found',
-      });
-    }
+    const where = {
+      customers: { some: { id: parseInt(id) } }, // Filter for documents purchased by the customer
+      ...(search && {
+        OR: [
+          { name: { contains: search, mode: 'insensitive' } },
+          { title: { contains: search, mode: 'insensitive' } },
+        ],
+      }),
+      ...(typeFilter !== 'ALL' && { type: typeFilter }),
+    };
 
     const [tenderDocs, total] = await Promise.all([
       prisma.tenderDoc.findMany({
-        where: { tenderId: parseInt(tenderId) },
-        skip,
-        take: parseInt(limit),
-        include: {
-          tender: {
-            select: { id: true, title: true },
-          },
-          customers: {
-            select: { id: true, firstName: true, lastName: true, email: true },
-          },
+        where,
+        select: {
+          id: true,
+          name: true,
+          title: true,
+          file: true,
+          price: true,
+          type: true,
+          createdAt: true,
+          tenderId: true,
+          customers: { select: { id: true } },
         },
+        skip,
+        take: limit,
         orderBy: { createdAt: 'desc' },
       }),
-      prisma.tenderDoc.count({ where: { tenderId: parseInt(tenderId) } }),
+      prisma.tenderDoc.count({ where }),
     ]);
 
+    const formattedTenderDocs = tenderDocs.map(doc => ({
+      ...doc,
+      createdAt: doc.createdAt.toISOString().split('T')[0],
+      customers: doc.customers.length,
+    }));
+
     res.json({
-      status: 'success',
-      data: tenderDocs,
-      meta: {
-        total,
-        page: parseInt(page),
-        limit: parseInt(limit),
+      data: formattedTenderDocs,
+      pagination: {
+        currentPage: page,
         totalPages: Math.ceil(total / limit),
+        totalDocs: total,
+        limit,
+        hasNextPage: page < Math.ceil(total / limit),
+        hasPrevPage: page > 1,
       },
     });
   } catch (error) {
-    winston.error(`Error fetching tenderDocs: ${error.message}`, { error });
-    res.status(500).json({
-      status: 'error',
-      error: 'Failed to fetch tenderDocs',
-    });
+    console.error('Error fetching purchased tender documents:', error);
+    return next(new handleError('Error fetching purchased tender documents', 500));
   }
 });
 
-// Get Single TenderDoc
-router.get('/:tenderId/tenderDocs/:id', authenticate, [
-  param('tenderId').isInt().withMessage('Tender ID must be an integer'),
-  param('id').isInt().withMessage('TenderDoc ID must be an integer'),
-], validate, async (req, res) => {
+// Get purchased bidding documents
+const getPurchasedBiddingDocs = asynerror(async (req, res, next) => {
+  const { id, type } = req.user;
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 6;
+  const search = req.query.search ? String(req.query.search).trim() : '';
+  const typeFilter = req.query.type ? String(req.query.type).toUpperCase() : 'ALL';
+
+  if (!id || type !== 'customer') {
+    return next(new handleError('User authentication failed or invalid user type', 401));
+  }
+
+  if (page < 1 || limit < 1) {
+    return next(new handleError('Page and limit must be positive numbers', 400));
+  }
+
+  if (typeFilter !== 'ALL' && !Object.values(PRICETYPE).includes(typeFilter)) {
+    return next(new handleError(`Invalid type. Allowed types are: ${Object.values(PRICETYPE).join(', ')}`, 400));
+  }
+
+  const skip = (page - 1) * limit;
+
   try {
-    const { tenderId, id } = req.params;
+    const where = {
+      customers: { some: { id: parseInt(id) } }, // Filter for documents purchased by the customer
+      ...(search && {
+        OR: [
+          { title: { contains: search, mode: 'insensitive' } },
+          { company: { contains: search, mode: 'insensitive' } },
+          { description: { contains: search, mode: 'insensitive' } },
+        ],
+      }),
+      ...(typeFilter !== 'ALL' && { type: typeFilter }),
+    };
 
-    const tenderDoc = await prisma.tenderDoc.findUnique({
-      where: { id: parseInt(id), tenderId: parseInt(tenderId) },
-      include: {
-        tender: {
-          select: { id: true, title: true },
+    const [biddingDocs, total] = await Promise.all([
+      prisma.biddingDoc.findMany({
+        where,
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          company: true,
+          file: true,
+          price: true,
+          type: true,
+          tenderId: true,
+          customers: { select: { id: true } },
         },
-        customers: {
-          select: { id: true, firstName: true, lastName: true, email: true },
-        },
-      },
-    });
+        skip,
+        take: limit,
+        orderBy: { id: 'desc' },
+      }),
+      prisma.biddingDoc.count({ where }),
+    ]);
 
-    if (!tenderDoc) {
-      return res.status(404).json({
-        status: 'error',
-        error: 'TenderDoc not found',
-      });
-    }
+    const formattedBiddingDocs = biddingDocs.map(doc => ({
+      ...doc,
+      customers: doc.customers.length,
+    }));
 
     res.json({
-      status: 'success',
-      data: tenderDoc,
+      data: formattedBiddingDocs,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        totalDocs: total,
+        limit,
+        hasNextPage: page < Math.ceil(total / limit),
+        hasPrevPage: page > 1,
+      },
     });
   } catch (error) {
-    winston.error(`Error fetching tenderDoc: ${error.message}`, { error });
-    res.status(500).json({
-      status: 'error',
-      error: 'Failed to fetch tenderDoc',
-    });
+    console.error('Error fetching purchased bidding documents:', error);
+    return next(new handleError('Error fetching purchased bidding documents', 500));
   }
 });
 
-// Update TenderDoc
-router.put(
-  '/:tenderId/tenderDocs/:id',
-  upload.single('file'), // Allow updating the file
-  [
-    param('tenderId').isInt().withMessage('Tender ID must be an integer'),
-    param('id').isInt().withMessage('TenderDoc ID must be an integer'),
-    ...tenderDocValidation,
-  ],
-  async (req, res) => {
-    try {
-      const { tenderId, id } = req.params;
-      const { name, title, price, type, customerIds = [] } = req.body;
+// Get customer notifications
+const getCustomerNotifications = asynerror(async (req, res, next) => {
+  const { id, type } = req.user;
 
-      // Verify Tender exists
-      const tender = await prisma.tender.findUnique({
-        where: { id: parseInt(tenderId) },
-      });
-      if (!tender) {
-        if (req.file) {
-          await fs.unlink(req.file.path).catch(err => winston.error(`Error deleting file: ${err.message}`));
-        }
-        return res.status(404).json({
-          status: 'error',
-          error: 'Tender not found',
-        });
-      }
-
-      // Verify TenderDoc exists
-      const existingDoc = await prisma.tenderDoc.findUnique({
-        where: { id: parseInt(id), tenderId: parseInt(tenderId) },
-      });
-      if (!existingDoc) {
-        if (req.file) {
-          await fs.unlink(req.file.path).catch(err => winston.error(`Error deleting file: ${err.message}`));
-        }
-        return res.status(404).json({
-          status: 'error',
-          error: 'TenderDoc not found',
-        });
-      }
-
-      // Verify Customers exist
-      if (customerIds.length > 0) {
-        const customers = await prisma.customer.findMany({
-          where: { id: { in: customerIds.map(id => parseInt(id)) } },
-        });
-        if (customers.length !== customerIds.length) {
-          if (req.file) {
-            await fs.unlink(req.file.path).catch(err => winston.error(`Error deleting file: ${err.message}`));
-          }
-          return res.status(400).json({
-            status: 'error',
-            error: 'One or more customer IDs are invalid',
-          });
-        }
-      }
-
-      // Update TenderDoc
-      const tenderDoc = await prisma.$transaction(async (tx) => {
-        // Delete old file if a new one is uploaded
-        if (req.file && existingDoc.file) {
-          await fs.unlink(existingDoc.file).catch(err => winston.error(`Error deleting old file: ${err.message}`));
-        }
-
-        const doc = await tx.tenderDoc.update({
-          where: { id: parseInt(id) },
-          data: {
-            name,
-            title,
-            file: req.file ? req.file.path : existingDoc.file, // Keep old file if no new file
-            price: price ? parseFloat(price) : null,
-            type,
-            createdAt: new Date(),
-            customers: {
-              set: customerIds.map(id => ({ id: parseInt(id) })),
-            },
-          },
-          include: {
-            tender: {
-              select: { id: true, title: true },
-            },
-            customers: {
-              select: { id: true, firstName: true, lastName: true, email: true },
-            },
-          },
-        });
-
-        // Log activity
-        await tx.activityLog.create({
-          data: {
-            method: 'PUT',
-            role: req.user.role,
-            action: 'UPDATE_TENDERDOC',
-            userId: req.user.id,
-            detail: `Updated tenderDoc: ${title} (ID: ${doc.id}) for tender ID: ${tenderId}`,
-            createdAt: new Date(),
-          },
-        });
-
-        return doc;
-      });
-
-      res.json({
-        status: 'success',
-        data: tenderDoc,
-        message: 'TenderDoc updated successfully',
-      });
-    } catch (error) {
-      if (req.file) {
-        await fs.unlink(req.file.path).catch(err => winston.error(`Error deleting file: ${err.message}`));
-      }
-      winston.error(`Error updating tenderDoc: ${error.message}`, { error });
-      if (error.code === 'P2025') {
-        return res.status(404).json({
-          status: 'error',
-          error: 'TenderDoc not found',
-        });
-      }
-      res.status(500).json({
-        status: 'error',
-        error: 'Failed to update tenderDoc',
-      });
-    }
+  if (!id || type !== 'customer') {
+    return next(new handleError('User authentication failed or invalid user type', 401));
   }
-);
 
-// Delete TenderDoc
-router.delete('/:tenderId/tenderDocs/:id', authenticate, [
-  param('tenderId').isInt().withMessage('Tender ID must be an integer'),
-  param('id').isInt().withMessage('TenderDoc ID must be an integer'),
-], validate, async (req, res) => {
   try {
-    const { tenderId, id } = req.params;
-
-    await prisma.$transaction(async (tx) => {
-      const tenderDoc = await tx.tenderDoc.findUnique({
-        where: { id: parseInt(id), tenderId: parseInt(tenderId) },
-      });
-      if (!tenderDoc) {
-        throw new Error('TenderDoc not found');
-      }
-
-      // Delete file from storage
-      await fs.unlink(tenderDoc.file).catch(err => winston.error(`Error deleting file: ${err.message}`));
-
-      await tx.tenderDoc.delete({
-        where: { id: parseInt(id) },
-      });
-
-      // Log activity
-      await tx.activityLog.create({
-        data: {
-          method: 'DELETE',
-          role: req.user.role,
-          action: 'DELETE_TENDERDOC',
-          userId: req.user.id,
-          detail: `Deleted tenderDoc ID: ${id} for tender ID: ${tenderId}`,
-          createdAt: new Date(),
-        },
-      });
+    const notifications = await prisma.notification.findMany({
+      where: {
+        customerId: parseInt(id),
+      },
+      select: {
+        id: true,
+        message: true,
+        isRead: true,
+        type: true,
+        tenderId: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: 'desc' },
     });
 
-    res.status(204).json({
-      status: 'success',
-      message: 'TenderDoc deleted successfully',
+    const formattedNotifications = notifications.map(notification => ({
+      ...notification,
+      createdAt: notification.createdAt.toISOString().split('T')[0],
+    }));
+
+    res.json({
+      data: formattedNotifications,
     });
   } catch (error) {
-    winston.error(`Error deleting tenderDoc: ${error.message}`, { error });
-    if (error.message === 'TenderDoc not found') {
-      return res.status(404).json({
-        status: 'error',
-        error: 'TenderDoc not found',
-      });
-    }
-    res.status(500).json({
-      status: 'error',
-      error: 'Failed to delete tenderDoc',
-    });
+    console.error('Error fetching customer notifications:', error);
+    return next(new handleError('Error fetching customer notifications', 500));
   }
 });
 
-// Serve TenderDoc File
-router.get('/:tenderId/tenderDocs/:id/file', authenticate, [
-  param('tenderId').isInt().withMessage('Tender ID must be an integer'),
-  param('id').isInt().withMessage('TenderDoc ID must be an integer'),
-],
-    async (req, res) => {
-  try {
-    const { tenderId, id } = req.params;
-
-    const tenderDoc = await prisma.tenderDoc.findUnique({
-      where: { id: parseInt(id), tenderId: parseInt(tenderId) },
-    });
-
-    if (!tenderDoc) {
-      return res.status(404).json({
-        status: 'error',
-        error: 'TenderDoc not found',
-      });
-    }
-
-    const filePath = path.join(__dirname, '../..', tenderDoc.file);
-    res.sendFile(filePath, (err) => {
-      if (err) {
-        winston.error(`Error serving file: ${err.message}`);
-        res.status(404).json({
-          status: 'error',
-          error: 'File not found',
-        });
-      }
-    });
-  } catch (error) {
-    winston.error(`Error serving tenderDoc file: ${error.message}`, { error });
-    res.status(500).json({
-      status: 'error',
-      error: 'Failed to serve file',
-    });
-  }
-});
-
-module.exports = router;
+module.exports = {
+  getPurchasedTenderDocs,
+  getPurchasedBiddingDocs,
+  getCustomerNotifications,
+};
