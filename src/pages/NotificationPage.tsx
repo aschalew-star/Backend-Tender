@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, Filter, Search, Calendar, Archive, Trash2, Settings, CheckCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import NotificationItem from '../component/Notification/NotificationItem';
-
+import Navbar from '../component/Layout/Navbar';
 // Static mock data
 const staticNotifications = [
   {
@@ -250,6 +250,8 @@ const NotificationPage: React.FC = () => {
   };
 
   return (
+    <div className='flex flex-col pt-16'>
+      <Navbar />
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-4 md:p-8">
       <div className="max-w-5xl mx-auto">
         {/* Header */}
@@ -523,7 +525,9 @@ const NotificationPage: React.FC = () => {
           </>
         )}
       </div>
+      </div>
     </div>
+      
   );
 };
 

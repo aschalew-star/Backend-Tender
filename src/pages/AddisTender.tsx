@@ -147,7 +147,7 @@ const customStyles = `
   }
 `;
 
-const App = () => {
+const Apppp = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<"tender" | "bidding">("tender");
   const [tenderSearch, setTenderSearch] = useState("");
@@ -168,7 +168,7 @@ const App = () => {
   const yourAuthToken = 'your-token-here'; // Replace with actual token
   const isSubscribed = false; // Replace with auth context or API check
 
-  // Fetch data from backend
+  // Fetch data from backend with region filter for Addis Ababa
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -177,6 +177,7 @@ const App = () => {
         const tenderParams = new URLSearchParams({
           page: tenderPage.toString(),
           limit: itemsPerPage.toString(),
+          region: "Addis Ababa", // Filter by Addis Ababa
           ...(tenderSearch && { search: tenderSearch }),
           ...(tenderFilter !== "ALL" && { type: tenderFilter }),
         });
@@ -190,6 +191,7 @@ const App = () => {
         const biddingParams = new URLSearchParams({
           page: biddingPage.toString(),
           limit: itemsPerPage.toString(),
+          region: "Addis Ababa", // Filter by Addis Ababa
           ...(biddingSearch && { search: biddingSearch }),
           ...(biddingFilter !== "ALL" && { type: biddingFilter }),
         });
@@ -271,7 +273,7 @@ const App = () => {
       <div className="max-w-[1600px] mx-auto px-4 py-8 pt-24">
         <div className="text-center mb-8">
           <h1 className="font-bold text-4xl text-gray-900 mb-2">Document Library</h1>
-          <p className="text-lg text-gray-600">Browse and access tender documents and bidding proposals</p>
+          <p className="text-lg text-gray-600">Browse and access tender documents and bidding proposals for Addis Ababa</p>
         </div>
 
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
@@ -344,7 +346,7 @@ const App = () => {
                       delay={0}
                       canAccess={doc.type === "FREE" || isSubscribed}
                       onDownload={() => handleDownload(doc.file, doc.name, doc.type)}
-                      onPreview={() => navigate(`/TenderDetailPage/${doc.tenderId}`)}
+                      onPreview={() => navigate(`/tender/${doc.tenderId}`)}
                     />
                   ))}
                 </div>
@@ -400,7 +402,7 @@ const App = () => {
                       key={doc.id}
                       doc={doc}
                       onDownload={() => handleDownload(doc.file, doc.title, doc.type)}
-                      onPreview={() => navigate(`/TenderDetailPage/${doc.tenderId}`)}
+                      onPreview={() => navigate(`/tender/${doc.tenderId}`)}
                     />
                   ))}
                 </div>
@@ -463,7 +465,12 @@ const TenderDocPageWrapper = () => {
         const response = await fetch(`http://localhost:4000/api/tender/${tenderId}`);
         if (!response.ok) throw new Error('Failed to fetch tender');
         const data = await response.json();
-        setTender(data.data || null);
+        // Ensure the tender is from Addis Ababa
+        if (data.data && data.data.region?.name === "Addis Ababa") {
+          setTender(data.data);
+        } else {
+          setTender(null); // If tender is not from Addis Ababa, treat as not found
+        }
       } catch (err) {
         console.error(err);
         setTender(null);
@@ -476,7 +483,7 @@ const TenderDocPageWrapper = () => {
   }, [tenderId]);
 
   if (loading) return <div>Loading...</div>;
-  if (!tender) return <div>Tender not found</div>;
+  if (!tender) return <div>Tender not found or not in Addis Ababa</div>;
 
   return (
     <TenderDocPage
@@ -487,4 +494,4 @@ const TenderDocPageWrapper = () => {
   );
 };
 
-export default App;
+export default Apppp;

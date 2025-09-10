@@ -70,7 +70,7 @@ export default function StartPage() {
       title: "Tender Documents",
       description: "Browse and download all available tender documents and specifications",
       icon: <Download className="w-8 h-8" />,
-      href: "/documents/tender",
+      href: "/Tenders",
       color: "from-emerald-500 to-emerald-600",
       bgColor: "bg-emerald-50",
       stats: "156 Documents",

@@ -147,7 +147,7 @@ const customStyles = `
   }
 `;
 
-const App = () => {
+const PurchasedDocuments = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<"tender" | "bidding">("tender");
   const [tenderSearch, setTenderSearch] = useState("");
@@ -168,7 +168,7 @@ const App = () => {
   const yourAuthToken = 'your-token-here'; // Replace with actual token
   const isSubscribed = false; // Replace with auth context or API check
 
-  // Fetch data from backend
+  // Fetch purchased documents from backend
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -180,10 +180,14 @@ const App = () => {
           ...(tenderSearch && { search: tenderSearch }),
           ...(tenderFilter !== "ALL" && { type: tenderFilter }),
         });
-        const tenderDocsResponse = await fetch(`http://localhost:4000/api/tender/tenderdoc?${tenderParams}`);
-        if (!tenderDocsResponse.ok) throw new Error('Failed to fetch tender documents');
+        const tenderDocsResponse = await fetch(`http://localhost:4000/api/tender/purchased/tenderdoc?${tenderParams}`, {
+          headers: {
+            Authorization: `Bearer ${yourAuthToken}`,
+          },
+        });
+        if (!tenderDocsResponse.ok) throw new Error('Failed to fetch purchased tender documents');
         const tenderDocsData = await tenderDocsResponse.json();
-        console.log("TenderDocs data:", tenderDocsData);
+        console.log("Purchased TenderDocs data:", tenderDocsData);
         setTenderDocs(Array.isArray(tenderDocsData.data) ? tenderDocsData.data : []);
         setTenderPagination(tenderDocsData.pagination || null);
 
@@ -193,14 +197,18 @@ const App = () => {
           ...(biddingSearch && { search: biddingSearch }),
           ...(biddingFilter !== "ALL" && { type: biddingFilter }),
         });
-        const biddingDocsResponse = await fetch(`http://localhost:4000/api/tender/tenderbid?${biddingParams}`);
-        if (!biddingDocsResponse.ok) throw new Error('Failed to fetch bidding documents');
+        const biddingDocsResponse = await fetch(`http://localhost:4000/api/tender/purchased/tenderbid?${biddingParams}`, {
+          headers: {
+            Authorization: `Bearer ${yourAuthToken}`,
+          },
+        });
+        if (!biddingDocsResponse.ok) throw new Error('Failed to fetch purchased bidding documents');
         const biddingDocsData = await biddingDocsResponse.json();
-        console.log("BiddingDocs data:", biddingDocsData);
+        console.log("Purchased BiddingDocs data:", biddingDocsData);
         setBiddingDocs(Array.isArray(biddingDocsData.data) ? biddingDocsData.data : []);
         setBiddingPagination(biddingDocsData.pagination || null);
       } catch (err) {
-        setError('Error fetching data. Please try again later.');
+        setError('Error fetching purchased documents. Please try again later.');
         console.error(err);
       } finally {
         setLoading(false);
@@ -264,14 +272,14 @@ const App = () => {
     }
   };
 
-  const DocumentLibrary = () => (
+  const PurchasedDocumentsLibrary = () => (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <Navbar />
       <style>{customStyles}</style>
       <div className="max-w-[1600px] mx-auto px-4 py-8 pt-24">
         <div className="text-center mb-8">
-          <h1 className="font-bold text-4xl text-gray-900 mb-2">Document Library</h1>
-          <p className="text-lg text-gray-600">Browse and access tender documents and bidding proposals</p>
+          <h1 className="font-bold text-4xl text-gray-900 mb-2">My Purchased Documents</h1>
+          <p className="text-lg text-gray-600">Browse and access your purchased tender documents and bidding proposals</p>
         </div>
 
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
@@ -313,7 +321,7 @@ const App = () => {
                   <div className="relative max-w-md w-full">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                     <Input
-                      placeholder="Search tender documents..."
+                      placeholder="Search purchased tender documents..."
                       value={tenderSearch}
                       onChange={(e) => {
                         setTenderSearch(e.target.value);
@@ -342,9 +350,9 @@ const App = () => {
                       key={doc.id}
                       document={doc}
                       delay={0}
-                      canAccess={doc.type === "FREE" || isSubscribed}
+                      canAccess={true} // Purchased documents are always accessible
                       onDownload={() => handleDownload(doc.file, doc.name, doc.type)}
-                      onPreview={() => navigate(`/TenderDetailPage/${doc.tenderId}`)}
+                      onPreview={() => navigate(`/purchased/tender/${doc.tenderId}`)}
                     />
                   ))}
                 </div>
@@ -352,7 +360,7 @@ const App = () => {
                 {tenderDocs.length === 0 && (
                   <div className="text-center py-12">
                     <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <h3 className="font-bold text-xl text-gray-500 mb-2">No documents found</h3>
+                    <h3 className="font-bold text-xl text-gray-500 mb-2">No purchased tender documents found</h3>
                     <p className="text-gray-400">Try adjusting your search terms or filter</p>
                   </div>
                 )}
@@ -371,7 +379,7 @@ const App = () => {
                   <div className="relative max-w-md w-full">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                     <Input
-                      placeholder="Search proposals by company or description..."
+                      placeholder="Search purchased proposals by company or description..."
                       value={biddingSearch}
                       onChange={(e) => {
                         setBiddingSearch(e.target.value);
@@ -400,7 +408,7 @@ const App = () => {
                       key={doc.id}
                       doc={doc}
                       onDownload={() => handleDownload(doc.file, doc.title, doc.type)}
-                      onPreview={() => navigate(`/TenderDetailPage/${doc.tenderId}`)}
+                      onPreview={() => navigate(`/purchased/tender/${doc.tenderId}`)}
                     />
                   ))}
                 </div>
@@ -408,7 +416,7 @@ const App = () => {
                 {biddingDocs.length === 0 && (
                   <div className="text-center py-12">
                     <Building2 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <h3 className="font-bold text-xl text-gray-500 mb-2">No proposals found</h3>
+                    <h3 className="font-bold text-xl text-gray-500 mb-2">No purchased proposals found</h3>
                     <p className="text-gray-400">Try adjusting your search terms or filter</p>
                   </div>
                 )}
@@ -444,7 +452,7 @@ const App = () => {
 
   return (
     <Routes>
-      <Route path="/" element={<DocumentLibrary />} />
+      <Route path="/" element={<PurchasedDocumentsLibrary />} />
       <Route path="/tender/:tenderId" element={<TenderDocPageWrapper />} />
     </Routes>
   );
@@ -460,7 +468,11 @@ const TenderDocPageWrapper = () => {
   useEffect(() => {
     const fetchTender = async () => {
       try {
-        const response = await fetch(`http://localhost:4000/api/tender/${tenderId}`);
+        const response = await fetch(`http://localhost:4000/api/tender/${tenderId}`, {
+          headers: {
+            Authorization: `Bearer ${yourAuthToken}`,
+          },
+        });
         if (!response.ok) throw new Error('Failed to fetch tender');
         const data = await response.json();
         setTender(data.data || null);
@@ -482,9 +494,9 @@ const TenderDocPageWrapper = () => {
     <TenderDocPage
       tender={tender}
       isSubscribed={isSubscribed}
-      onBack={() => navigate('/')}
+      onBack={() => navigate('/purchased')}
     />
   );
 };
 
-export default App;
+export default PurchasedDocuments;

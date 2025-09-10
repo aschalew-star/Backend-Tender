@@ -27,7 +27,10 @@ import { CheckoutPage } from "./pages/Checkout.tsx";
 import FAQ from "./pages/FAQ.tsx";
 import Categoriess from "./pages/admin/Catagory.tsx";
 import Advertis from "./pages/admin/Advertis"
- import Subcatagorys from "./pages/admin/Subcatagorys.tsx"
+import Subcatagorys from "./pages/admin/Subcatagorys.tsx"
+import Apppp from "./pages/AddisTender"
+import PurchasedDocuments from "./pages/Userpurchased.tsx";
+ import Profile from "./pages/Profile.tsx";
 
 
 
@@ -38,13 +41,16 @@ function App() {
 
         <Route path="/" element={<Home />} />
         <Route path="/Tenders" element={<AllTender />} />
+        <Route path="/land-lease" element={<Apppp />} />
+        <Route path="/account/profile" element={<Profile />} />
+        <Route path="/documents/purchased" element={<PurchasedDocuments />} />
         <Route path="/FAQ" element={<FAQ />} />
         <Route path="/checkout/:id" element={<CheckoutPage />} />
         <Route path="/Documents" element={<WrappedTenderDocPage />} />
         <Route path="/TenderDetailPage/:id" element={<TenderDetailPage />} />
         <Route path="/home" element={<StartPage/>} />
-        <Route path="/NotificationSettings" element={<NotificationSettingsPage/>} />
-        <Route path="/Billing" element={<Billing />} />
+        <Route path="/alerts/email" element={<NotificationSettingsPage/>} />
+        <Route path="/account/billing" element={<Billing />} />
         <Route path="/Notifications" element={<NotificationPage/>} />
            
          {/* Admin/dashboard  pages */}
@@ -66,10 +72,6 @@ function App() {
         <Route path="/admin/Activity" element={<Activity />} />
         <Route path="/edit-tender/:id" element={<Tenderedit />} />
         <Route path="/admin/SystemUser/create" element={<SystemUsers />} />
-        {/* <Route path="/admin/create" element={<div>Create Tender Page (Placeholder)</div>} />
-        <Route path="/admin/categories" element={<div>Categories Page (Placeholder)</div>} />
-        <Route path="/admin/settings" element={<div>Settings Page (Placeholder)</div>} />
-        <Route path="*" element={<Overview />} /> {/* Fallback to Dashboard */} 
       </Routes>
     </Router>
   );

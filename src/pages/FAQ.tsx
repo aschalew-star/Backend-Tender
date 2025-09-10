@@ -27,6 +27,7 @@ interface FAQItem {
   helpful?: number;
   tags?: string[];
 }
+import Navbar from '../component/Layout/Navbar';
 
 const faqData: FAQItem[] = [
   // Account & Registration
@@ -234,6 +235,8 @@ const FAQ: React.FC = () => {
   }, [searchTerm, filteredFAQs]);
 
   return (
+    <div className='flex flex-col pt-16'>
+      <Navbar />
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* Enhanced Header */}
       <div className="bg-white shadow-lg border-b border-gray-100">
@@ -579,8 +582,12 @@ const FAQ: React.FC = () => {
           </div>
         )}
       </div>
+      </div>
     </div>
+      
   );
 };
 
 export default FAQ;
+
+

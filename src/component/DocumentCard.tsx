@@ -1,5 +1,3 @@
-"use client";
-
 import React from 'react';
 import { FileText, Calendar, Download, Eye } from 'lucide-react';
 
@@ -84,9 +82,9 @@ interface TenderDoc {
   name: string;
   title: string;
   file: string;
-  price?: number | null;
+  price?: string | null;
   type: "FREE" | "PAID";
-  createdAt: Date;
+  createdAt: string;
   tenderId: number;
   customers: number;
 }
@@ -134,7 +132,7 @@ const DocumentCard = ({ document, delay, canAccess, onDownload, onPreview }: Doc
       <div className="space-y-2 mb-4">
         <div className="flex items-center text-sm text-gray-600">
           <Calendar className="w-4 h-4 mr-2 text-gray-400" />
-          {/* Published: {document.createdAt.toLocaleDateString()} */}
+          Published: {new Date(document.createdAt).toLocaleDateString()}
         </div>
       </div>
 

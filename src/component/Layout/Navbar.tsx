@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import { Menu, X, Bell, User, ChevronDown, Settings, LogOut } from "lucide-react";
+import { Link } from "react-router-dom";
 
 interface NavItem {
   name: string;
@@ -74,6 +75,8 @@ const Navbar: React.FC = () => {
           {/* Right Section: Notifications + Profile */}
           <div className="flex items-center gap-6">
             {/* Notifications */}
+          <Link to="/Notifications">
+
             <motion.div whileHover={{ scale: 1.1 }} className="relative">
               <button
                 onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
@@ -106,10 +109,12 @@ const Navbar: React.FC = () => {
                   </motion.div>
                 )}
               </AnimatePresence>
-            </motion.div>
+              </motion.div>
+              </Link>
 
             {/* Profile */}
             <div className="relative">
+              <Link to="/account/profile">
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
@@ -136,7 +141,9 @@ const Navbar: React.FC = () => {
                   </div>
                 </div>
                 <ChevronDown className="w-4 h-4 text-gray-600" />
-              </motion.button>
+                </motion.button>
+              </Link>
+                
               <AnimatePresence>
                 {isProfileOpen && (
                   <motion.div

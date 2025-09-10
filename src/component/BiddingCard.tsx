@@ -1,5 +1,3 @@
-"use client";
-
 import React from 'react';
 import { Building2, Download, Eye } from 'lucide-react';
 
@@ -77,33 +75,30 @@ const CardContent = ({ children, className = '', ...props }) => (
 );
 // --- END: Recreated shadcn/ui components ---
 
-// --- START: Mock Data and Interfaces ---
+// --- START: Interfaces ---
 interface BiddingDoc {
   id: number;
   title: string;
-  description: string;
+  description?: string;
   company: string;
   file: string;
-  price: number;
+  price?: string | null;
   type: "FREE" | "PAID";
-  tender: {
-    title: string;
-    category: string;
-  };
+  tenderId: number;
+  customers: number;
 }
-// --- END: Mock Data and Interfaces ---
+
+interface BiddingDocCardProps {
+  doc: BiddingDoc;
+  onDownload: () => void;
+  onPreview: () => void;
+}
+// --- END: Interfaces ---
 
 // Custom CSS for animations
 const customStyles = `
-  .animate-fade-in {
-    animation: fadeIn 0.5s ease-out;
-  }
   .animate-slide-in {
     animation: slideIn 0.6s ease-out;
-  }
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
   }
   @keyframes slideIn {
     from { transform: translateY(20px); opacity: 0; }
@@ -111,7 +106,7 @@ const customStyles = `
   }
 `;
 
-const BiddingDocCard = ({ doc }) => (
+const BiddingDocCard = ({ doc, onDownload, onPreview }: BiddingDocCardProps) => (
   <Card className="document-card border-0 shadow-sm bg-white animate-slide-in">
     <style>{customStyles}</style>
     <CardContent className="p-6">
@@ -130,19 +125,24 @@ const BiddingDocCard = ({ doc }) => (
         </Badge>
       </div>
 
-      <p className="text-sm text-gray-600 mb-4 leading-relaxed">{doc.description}</p>
-
-      <div className="flex items-center text-sm text-gray-600 mb-4">
-        <Building2 className="w-4 h-4 mr-2 text-gray-400" />
-        {/* Related to: {doc.tender.title} */}
-      </div>
+      <p className="text-sm text-gray-600 mb-4 leading-relaxed">{doc.description || 'No description available'}</p>
 
       <div className="flex space-x-2">
-        <Button size="sm" className="flex-1 bg-orange-600 hover:bg-orange-700">
+        <Button 
+          size="sm" 
+          className="flex-1 bg-orange-600 hover:bg-orange-700"
+          onClick={onDownload}
+          disabled={doc.type === "PAID" && false} // Replace false with !isSubscribed
+        >
           <Download className="w-4 h-4 mr-2" />
           {doc.type === "FREE" ? "Download" : "Purchase & Download"}
         </Button>
-        <Button size="sm" variant="outline" className="bg-transparent">
+        <Button 
+          size="sm" 
+          variant="outline" 
+          className="bg-transparent"
+          onClick={onPreview}
+        >
           <Eye className="w-4 h-4 mr-2" />
           Preview
         </Button>
